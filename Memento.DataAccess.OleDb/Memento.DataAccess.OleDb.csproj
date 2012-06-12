@@ -45,6 +45,10 @@
       <Project>{7A26A935-81D5-4A53-87E8-E6AC191ED1FF}</Project>
       <Name>Memento.DataAccess</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Memento.Persistence.Commons\Memento.Persistence.Commons.csproj">
+      <Project>{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}</Project>
+      <Name>Memento.Persistence.Commons</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

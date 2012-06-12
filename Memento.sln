@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Memento.DataAccess.OleDb", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Memento.DataAccess.Odbc", "Memento.DataAccess.Odbc\Memento.DataAccess.Odbc.csproj", "{56E885FC-444A-4E76-838D-196ACEE34934}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Memento.Persistence.Commons", "Memento.Persistence.Commons\Memento.Persistence.Commons.csproj", "{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +109,16 @@ Global
 		{56E885FC-444A-4E76-838D-196ACEE34934}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{56E885FC-444A-4E76-838D-196ACEE34934}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{56E885FC-444A-4E76-838D-196ACEE34934}.Release|x86.ActiveCfg = Release|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

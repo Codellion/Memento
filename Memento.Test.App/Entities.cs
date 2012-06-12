@@ -41,22 +41,22 @@ namespace Memento.Test.App
                 if(cmbEntidades.SelectedItem.Equals("Producto"))
                 {
                     IPersistence<Producto> servPers = new Persistence<Producto>();
-                    dgData.DataSource = servPers.GetEntidadesDs().Tables[0];
+                    dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
                 }
                 else if (cmbEntidades.SelectedItem.Equals("Cliente"))
                 {
                     IPersistence<Cliente> servPers = new Persistence<Cliente>();
-                    dgData.DataSource = servPers.GetEntidadesDs().Tables[0];
+                    dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
                 }
                 else if (cmbEntidades.SelectedItem.Equals("Linea"))
                 {
                     IPersistence<Linea> servPers = new Persistence<Linea>();
-                    dgData.DataSource = servPers.GetEntidadesDs().Tables[0];
+                    dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
                 }
                 else if (cmbEntidades.SelectedItem.Equals("Factura"))
                 {
                     IPersistence<Factura> servPers = new Persistence<Factura>();
-                    dgData.DataSource = servPers.GetEntidadesDs().Tables[0];
+                    dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
                 }
             }
             else
@@ -101,7 +101,7 @@ namespace Memento.Test.App
         {
             IPersistence<Linea> pers = new Persistence<Linea>();
 
-            Linea linea = pers.GetEntidad(1);
+            Linea linea = pers.GetEntity(1);
 
             List<Linea> lineas = linea.Producto.Value.Lineas.Value;
 
@@ -117,9 +117,9 @@ namespace Memento.Test.App
                 {
                     IPersistence<Producto> servProd = new Persistence<Producto>(context);
 
-                    prod1 = servProd.InsertarEntidad(prod1);
+                    prod1 = servProd.InsertEntity(prod1);
 
-                    prod2 = servProd.InsertarEntidad(prod2);
+                    prod2 = servProd.InsertEntity(prod2);
 
                     context.SaveChanges();    
                 }

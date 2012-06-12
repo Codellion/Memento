@@ -5,14 +5,13 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{2F59BEAB-9770-435E-811E-D28034F904A1}</ProjectGuid>
+    <ProjectGuid>{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Memento.DataAccess.EntLib5</RootNamespace>
-    <AssemblyName>Memento.DataAccess.EntLib5</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <RootNamespace>Memento.Persistence.Commons</RootNamespace>
+    <AssemblyName>Memento.Persistence.Commons</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,24 +31,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Data, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BdPersistence.cs" />
+    <Compile Include="Entity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Memento.DataAccess\Memento.DataAccess.csproj">
-      <Project>{7A26A935-81D5-4A53-87E8-E6AC191ED1FF}</Project>
-      <Name>Memento.DataAccess</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Memento.Persistence.Commons\Memento.Persistence.Commons.csproj">
-      <Project>{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}</Project>
-      <Name>Memento.Persistence.Commons</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -7,7 +7,7 @@ using System.Reflection;
 
 using Memento.DataAccess.Interfaces;
 using Memento.DataAccess.Utils;
-
+using Memento.Persistence.Commons;
 using Microsoft.Practices.EnterpriseLibrary.Data;
 
 namespace Memento.DataAccess.EntLib5
@@ -17,7 +17,7 @@ namespace Memento.DataAccess.EntLib5
     /// para ello se ha utilizado el servicio de acceso a BBDD de Enterprise Library 5.0
     /// </summary>
     /// <typeparam name="T">Tipo de la entidad con la que se va operar</typeparam>
-    public class BdPersistence<T> : IDataPersistence<T>
+    public class BdPersistence<T> : IDataPersistence<T> where T: Entity
     {
 
         #region Constantes
@@ -68,7 +68,7 @@ namespace Memento.DataAccess.EntLib5
         /// <param name="transaccion">Transacción activa</param>
         public BdPersistence(IDbTransaction transaccion)
         {
-            this.servicioDatos = DatabaseFactory.CreateDatabase(Entorno);
+            servicioDatos = DatabaseFactory.CreateDatabase(Entorno);
             this.transaccion = transaccion as DbTransaction;
         }
 
@@ -80,7 +80,7 @@ namespace Memento.DataAccess.EntLib5
         /// <param name="transaccion">Transacción activa</param>
         public BdPersistence(string entorno, IDbTransaction transaccion)
         {
-            this.servicioDatos = DatabaseFactory.CreateDatabase(entorno);
+            servicioDatos = DatabaseFactory.CreateDatabase(entorno);
             this.transaccion = transaccion as DbTransaction;
         }
 
@@ -94,9 +94,9 @@ namespace Memento.DataAccess.EntLib5
         /// </summary>
         /// <param name="entidad">Entidad que se desea persistir</param>
         /// <returns>Identificador de la entidad persistida</returns>
-        public object InsertarEntidad(T entidad)
+        public object InsertEntity(Entity entidad)
         {
-            Query query = DbUtil<T>.GetInsert(entidad);
+            Query query = DbUtil<T>.GetInsert((T)entidad);
 
             object id;
 
@@ -118,9 +118,8 @@ namespace Memento.DataAccess.EntLib5
             Type tId = tipoT.GetProperty(tipoT.Name + "Id").PropertyType;
 
             Type nullType = Nullable.GetUnderlyingType(tId);
-            Object nullValue = null;
 
-            nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
+            object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
 
             return nullValue;
         }
@@ -129,9 +128,9 @@ namespace Memento.DataAccess.EntLib5
         /// Método que actualiza una entidad
         /// </summary>
         /// <param name="entidad">Entidad actualizada</param>
-        public void ModificarEntidad(T entidad)
+        public void UpdateEntity(Entity entidad)
         {
-            Query query = DbUtil<T>.GetUpdate(entidad);
+            Query query = DbUtil<T>.GetUpdate((T)entidad);
 
             if (transaccion != null)
             {
@@ -147,7 +146,7 @@ namespace Memento.DataAccess.EntLib5
         /// Método que realiza un borrado lógico de la entidad
         /// </summary>
         /// <param name="entidadId">Identificador de la entidad a eliminar</param>
-        public void EliminarEntidad(object entidadId)
+        public void DeleteEntity(object entidadId)
         {
             Query query = DbUtil<T>.GetDelete(entidadId);
 
@@ -167,7 +166,7 @@ namespace Memento.DataAccess.EntLib5
         /// </summary>
         /// <param name="entidadId">Identificador de la entidad</param>
         /// <returns>Entidad que se recupera</returns>
-        public IDataReader GetEntidad(object entidadId)
+        public IDataReader GetEntity(object entidadId)
         {
             T aux = DbUtil<T>.GetPlantillaEntidad();
             Type gType = aux.GetType();
@@ -175,9 +174,8 @@ namespace Memento.DataAccess.EntLib5
             PropertyInfo pPk = gType.GetProperty(gType.Name + "Id");
 
             Type nullType = Nullable.GetUnderlyingType(pPk.PropertyType);
-            Object nullValue = null;
 
-            nullValue = nullType != null ? Convert.ChangeType(entidadId, nullType) : entidadId;
+            object nullValue = nullType != null ? Convert.ChangeType(entidadId, nullType) : entidadId;
 
             pPk.SetValue(aux, nullValue, null);
 
@@ -190,7 +188,7 @@ namespace Memento.DataAccess.EntLib5
         /// Método que devuelve todas las entidades activas
         /// </summary>
         /// <returns>Entidades activas</returns>
-        public IDataReader GetEntidades()
+        public IDataReader GetEntities()
         {
             T aux = DbUtil<T>.GetPlantillaEntidad();
             
@@ -205,9 +203,9 @@ namespace Memento.DataAccess.EntLib5
         /// </summary>
         /// <param name="entidadFiltro">Entidad utilizada de filtro</param>
         /// <returns>Entidades filtradas</returns>
-        public IDataReader GetEntidades(T entidadFiltro)
+        public IDataReader GetEntities(Entity entidadFiltro)
         {
-            Query query = DbUtil<T>.GetQuery(entidadFiltro);
+            Query query = DbUtil<T>.GetQuery((T)entidadFiltro);
 
             return servicioDatos.ExecuteReader(CommandType.Text, query.ToSelect());
         }
@@ -216,7 +214,7 @@ namespace Memento.DataAccess.EntLib5
         /// Método que devuelve un DataSet con todas las entidades activas
         /// </summary>
         /// <returns>DataSet con las entidades activas</returns>
-        public DataSet GetEntidadesDs()
+        public DataSet GetEntitiesDs()
         {
             T aux = DbUtil<T>.GetPlantillaEntidad();
             
@@ -231,9 +229,9 @@ namespace Memento.DataAccess.EntLib5
         /// </summary>
         /// <param name="entidadFiltro">Entidad utilizada de filtro</param>
         /// <returns>DataSet con las entidades filtradas</returns>
-        public DataSet GetEntidadesDs(T entidadFiltro)
+        public DataSet GetEntitiesDs(Entity entidadFiltro)
         {
-            Query query = DbUtil<T>.GetQuery(entidadFiltro);
+            Query query = DbUtil<T>.GetQuery((T)entidadFiltro);
 
             return servicioDatos.ExecuteDataSet(CommandType.Text, query.ToSelect());
         }
@@ -245,7 +243,7 @@ namespace Memento.DataAccess.EntLib5
         /// <param name="storeProcedure">Nombre del procedimiento</param>
         /// <param name="parametros">Parametros necesitados por el procedimiento</param>
         /// <returns>Dataset con los resultados</returns>
-        public DataSet GetEntidadesDs(string storeProcedure, IDictionary<string, object> parametros)
+        public DataSet GetEntitiesDs(string storeProcedure, IDictionary<string, object> parametros)
         {
             object[] parametrosProc = new object[parametros.Count];
             int count = 0;
@@ -268,7 +266,7 @@ namespace Memento.DataAccess.EntLib5
 
 
         /// <summary>
-        /// Método que devuelve una conexión de la Enterprise library 2006
+        /// Método que devuelve una conexión de la Enterprise library 5.0
         /// </summary>
         /// <returns></returns>
         public IDbConnection GetConnection()

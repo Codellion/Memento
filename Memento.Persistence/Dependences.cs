@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-
+using Memento.Persistence.Commons;
 using Memento.Persistence.Interfaces;
 
 namespace Memento.Persistence
@@ -60,7 +60,7 @@ namespace Memento.Persistence
                         prop.SetValue(aux, refAux, null);
 
                         //Realizamos la busqueda de los datos relacionados
-                        List<T> res = servicioPers.GetEntidades(aux) as List<T>;
+                        List<T> res = servicioPers.GetEntities(aux) as List<T>;
 
                         _value = res;
                     }

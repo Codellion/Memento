@@ -5,7 +5,7 @@ using System.Reflection;
 
 using Memento.DataAccess;
 using Memento.DataAccess.Interfaces;
-
+using Memento.Persistence.Commons;
 using Memento.Persistence.Interfaces;
 
 namespace Memento.Persistence
@@ -14,7 +14,7 @@ namespace Memento.Persistence
     /// Clase que actua de fachada del módulo de persistencia
     /// </summary>
     /// <typeparam name="T">Tipo de dato sobre el que se creará la factoría</typeparam>
-    public class Persistence<T> : IPersistence<T>
+    public class Persistence<T> : IPersistence<T> where T: Entity
     {
         #region Constantes
 
@@ -51,11 +51,11 @@ namespace Memento.Persistence
                 {
                     if(_contexto != null)
                     {
-                        _persistenciaDatos = DataFactoryProvider.GetProveedor<T>(_contexto.Transaccion);
+                        _persistenciaDatos = DataFactoryProvider.GetProvider<T>(_contexto.Transaccion);
                     }
                     else
                     {
-                        _persistenciaDatos = DataFactoryProvider.GetProveedor<T>(null);
+                        _persistenciaDatos = DataFactoryProvider.GetProvider<T>(null);
                     }
                 }
 
@@ -93,54 +93,54 @@ namespace Memento.Persistence
         /// <summary>
         /// Da de alta una entidad en BBDD
         /// </summary>
-        /// <param name="entidad">Entidad que se dará de alta</param>
+        /// <param name="entity">Entidad que se dará de alta</param>
         /// <returns>Entidad con el identificador de BBDD informado</returns>
-        public T InsertarEntidad(T entidad)
+        public T InsertEntity(Entity entity)
         {
-            object id = PersistenciaDatos.InsertarEntidad(entidad);
+            object id = PersistenciaDatos.InsertEntity(entity);
 
             Type tipoEntidad = typeof (T);
 
             PropertyInfo propId = tipoEntidad.GetProperty(tipoEntidad.Name + "Id");
             Type nullType = Nullable.GetUnderlyingType(propId.PropertyType);
-            Object nullValue = null;
 
-            nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
+            object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
 
-            propId.SetValue(entidad, nullValue, null);
+            propId.SetValue(entity, nullValue, null);
 
+            object res = entity;
 
-            return entidad;
+            return (T)res;
         }
 
         /// <summary>
         /// Realiza las modificaciones sobre una entidad en BBDD
         /// </summary>
-        /// <param name="entidad">Entidad modificada</param>
-        public void ModificarEntidad(T entidad)
+        /// <param name="entity">Entidad modificada</param>
+        public void UpdateEntity(Entity entity)
         {
-            PersistenciaDatos.ModificarEntidad(entidad);
+            PersistenciaDatos.UpdateEntity(entity);
         }
 
         /// <summary>
         /// Realiza una borrado lógico de la entidad cuyo identificador
         /// se pasa como parámetro
         /// </summary>
-        /// <param name="entidadId">Identificador de la entidad que se quiere eliminar</param>
-        public void EliminarEntidad(object entidadId)
+        /// <param name="entitydId">Identificador de la entidad que se quiere eliminar</param>
+        public void DeleteEntity(object entitydId)
         {
-            PersistenciaDatos.EliminarEntidad(entidadId);
+            PersistenciaDatos.DeleteEntity(entitydId);
         }
 
         /// <summary>
         /// Devuelve la entidad cuyo identificador se pasa como parámetro
         /// de entrada
         /// </summary>
-        /// <param name="entidadId">Identificador de la entidad que se quiere obtener</param>
+        /// <param name="entitydId">Identificador de la entidad que se quiere obtener</param>
         /// <returns>Entidad</returns>
-        public T GetEntidad(object entidadId)
+        public T GetEntity(object entitydId)
         {
-            IDataReader dr = PersistenciaDatos.GetEntidad(entidadId);
+            IDataReader dr = PersistenciaDatos.GetEntity(entitydId);
             dr.Read();
 
             //Realizamos el mapeo de la entidad desde los datos de la fila
@@ -155,11 +155,11 @@ namespace Memento.Persistence
         /// Devuelve una lista de todas las entidades activas existentes en BBDD
         /// </summary>
         /// <returns>Lista da entidades</returns>
-        public IList<T> GetEntidades()
+        public IList<Entity> GetEntities()
         {
-            IList<T> entidades = new List<T>();
+            IList<Entity> entidades = new List<Entity>();
 
-            IDataReader dr = PersistenciaDatos.GetEntidades();
+            IDataReader dr = PersistenciaDatos.GetEntities();
 
             //Realizamos el mapeo de las entidades desde los datos de cada fila
             while (dr.Read())
@@ -176,13 +176,13 @@ namespace Memento.Persistence
         /// Devuelve una lista de todas las entidades obtenidas con los 
         /// filtros establecidos en la variable entidadFiltro
         /// </summary>
-        /// <param name="entidadFiltro">Entidad que actua como filtro</param>
+        /// <param name="filterEntity">Entidad que actua como filtro</param>
         /// <returns>Lista de entidades</returns>
-        public IList<T> GetEntidades(T entidadFiltro)
+        public IList<Entity> GetEntities(Entity filterEntity)
         {
-            IList<T> entidades = new List<T>();
+            IList<Entity> entidades = new List<Entity>();
 
-            IDataReader dr = PersistenciaDatos.GetEntidades(entidadFiltro);
+            IDataReader dr = PersistenciaDatos.GetEntities(filterEntity);
 
             //Realizamos el mapeo de las entidades desde los datos de cada fila
             while (dr.Read())
@@ -199,20 +199,20 @@ namespace Memento.Persistence
         /// Devuelve un dataset con todas las filas activas en BBDD de la entidad
         /// </summary>
         /// <returns>Dataset con el resultado</returns>
-        public DataSet GetEntidadesDs()
+        public DataSet GetEntitiesDs()
         {
-            return PersistenciaDatos.GetEntidadesDs();
+            return PersistenciaDatos.GetEntitiesDs();
         }
 
         /// <summary>
         /// Devuelve un dataset con todas las filas obtenidas con los 
         /// filtros establecidos en la variable entidadFiltro
         /// </summary>
-        /// <param name="entidadFiltro">Entidad que actua como filtro</param>
+        /// <param name="filterEntity">Entidad que actua como filtro</param>
         /// <returns>Dataset con el resultado del filtro</returns>
-        public DataSet GetEntidadesDs(T entidadFiltro)
+        public DataSet GetEntitiesDs(Entity filterEntity)
         {
-            return PersistenciaDatos.GetEntidadesDs(entidadFiltro);
+            return PersistenciaDatos.GetEntitiesDs(filterEntity);
         }
 
         /// <summary>
@@ -220,11 +220,11 @@ namespace Memento.Persistence
         /// con los parametros pasados
         /// </summary>
         /// <param name="storeProcedure">Nombre del procedimiento</param>
-        /// <param name="parametros">Parametros necesitados por el procedimiento</param>
+        /// <param name="procParams">Parametros necesitados por el procedimiento</param>
         /// <returns>Dataset con los resultados</returns>
-        public DataSet GetEntidadesDs(string storeProcedure, IDictionary<string, object> parametros)
+        public DataSet GetEntitiesDs(string storeProcedure, IDictionary<string, object> procParams)
         {
-            return PersistenciaDatos.GetEntidadesDs(storeProcedure, parametros);
+            return PersistenciaDatos.GetEntitiesDs(storeProcedure, procParams);
         }
 
         #endregion
@@ -236,24 +236,24 @@ namespace Memento.Persistence
         /// puede contener elementos de varios niveles (Ej: Elemento.Propiedad1.Atributo2
         /// Dichos objetos intermedios se instancia automáticamente
         /// </summary>
-        /// <param name="objeto">Objeto donde queremos introducir el valor</param>
+        /// <param name="targetObject">Objeto donde queremos introducir el valor</param>
         /// <param name="propName">Nombre de la propiedad</param>
-        /// <param name="valor">Valor de la propiedad</param>
-        private static void SetValorEnObjeto(T objeto, string propName, Object valor)
+        /// <param name="value">Valor de la propiedad</param>
+        private static void SetValueInObject(T targetObject, string propName, Object value)
         {
             try
             {
-                Type tipoEntidad = objeto.GetType();
+                Type tipoEntidad = targetObject.GetType();
 
                 PropertyInfo refsInfo = tipoEntidad.GetProperty("Referencias");
 
-                IList<String> referencias = (IList<String>)refsInfo.GetValue(objeto, null);
+                IList<String> referencias = (IList<String>)refsInfo.GetValue(targetObject, null);
 
                 //Comprobamos si la propiedad contiene niveles de profundidad
                 if (propName.Contains("."))
                 {
                     string[] subProps = propName.Split('.');
-                    Object aux = objeto;
+                    Object aux = targetObject;
 
                     //Recorremos todos los niveles informados
                     foreach (string subProp in subProps)
@@ -316,8 +316,8 @@ namespace Memento.Persistence
                                 }
                                 else
                                 {
-                                    valor = TryParserNullBoolean(sprop, valor);
-                                    Object nullValue = GetNullableValueFromProp(sprop, valor);
+                                    value = TryParserNullBoolean(sprop, value);
+                                    Object nullValue = GetNullableValueFromProp(sprop, value);
 
                                     sprop.SetValue(aux, nullValue, null);
                                 }
@@ -325,8 +325,8 @@ namespace Memento.Persistence
                         }
                         else if (sprop != null)
                         {
-                            valor = TryParserNullBoolean(sprop, valor);
-                            Object nullValue = GetNullableValueFromProp(sprop, valor);
+                            value = TryParserNullBoolean(sprop, value);
+                            Object nullValue = GetNullableValueFromProp(sprop, value);
                             
                             sprop.SetValue(aux, nullValue, null);
                         }
@@ -340,12 +340,12 @@ namespace Memento.Persistence
                     if (!referencias.Contains(propName))
                     {
                         //Comprobamos que el valor a introducir no se nulo
-                        if (typeof(DBNull) != valor.GetType())
+                        if (typeof(DBNull) != value.GetType())
                         {
-                            valor = TryParserNullBoolean(prop, valor);
-                            Object nullValue = GetNullableValueFromProp(prop, valor);
+                            value = TryParserNullBoolean(prop, value);
+                            Object nullValue = GetNullableValueFromProp(prop, value);
 
-                            prop.SetValue(objeto, nullValue, null);
+                            prop.SetValue(targetObject, nullValue, null);
                         }
                     }
                 }
@@ -401,7 +401,7 @@ namespace Memento.Persistence
             for (int i = 0; i < numCols; i++)
             {
                 //Establecemos el valor de la columna
-                SetValorEnObjeto(aux, dr.GetName(i), dr.GetValue(i));
+                SetValueInObject(aux, dr.GetName(i), dr.GetValue(i));
             }
 
             return aux;
@@ -425,7 +425,7 @@ namespace Memento.Persistence
             {
                 string colName = dr.Table.Columns[i].ColumnName;
                 //Establecemos el valor de la columna
-                SetValorEnObjeto(aux, colName, dr[colName]);
+                SetValueInObject(aux, colName, dr[colName]);
             }
 
             return aux;

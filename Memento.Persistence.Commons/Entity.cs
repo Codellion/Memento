@@ -4,7 +4,7 @@ using System.Collections.Specialized;
 using System.Configuration;
 using System.Reflection;
 
-namespace Memento.Persistence
+namespace Memento.Persistence.Commons
 {
     /// <summary>
     /// Clase abstracta de la que heredan aquellas entidades que se

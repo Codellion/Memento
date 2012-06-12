@@ -1,4 +1,5 @@
 ﻿using Memento.Persistence;
+using Memento.Persistence.Commons;
 
 namespace Memento.Test.Entities
 {

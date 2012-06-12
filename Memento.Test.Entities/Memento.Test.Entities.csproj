@@ -44,6 +44,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Memento.Persistence.Commons\Memento.Persistence.Commons.csproj">
+      <Project>{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}</Project>
+      <Name>Memento.Persistence.Commons</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Memento.Persistence\Memento.Persistence.csproj">
       <Project>{2F069557-B0FA-4182-BA7E-B20A0AA138EC}</Project>
       <Name>Memento.Persistence</Name>

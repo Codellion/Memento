@@ -45,6 +45,12 @@
     <Compile Include="Utils\DbUtil.cs" />
     <Compile Include="Utils\Query.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Memento.Persistence.Commons\Memento.Persistence.Commons.csproj">
+      <Project>{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}</Project>
+      <Name>Memento.Persistence.Commons</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

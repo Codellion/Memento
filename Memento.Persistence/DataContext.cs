@@ -2,6 +2,7 @@ using System;
 using System.Data;
 
 using Memento.DataAccess;
+using Memento.Persistence.Commons;
 
 namespace Memento.Persistence
 {

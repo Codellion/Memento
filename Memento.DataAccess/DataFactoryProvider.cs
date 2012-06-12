@@ -16,14 +16,13 @@ namespace Memento.DataAccess
         /// en función de la tipología de la entidad
         /// </summary>
         /// <typeparam name="T">Tipo de la entidad sobre la que se quiere obtener el servicio</typeparam>
-        /// <param name="datbase">Base de datos</param>
-        /// /// <param name="transaction">Transaccion abierta</param>
+        /// <param name="transaction">Transaccion abierta</param>
         /// <returns>Implementación del interfaz de acceso a datos</returns>
-        public static IDataPersistence<T> GetProveedor<T>(IDbTransaction transaction)
+        public static IDataPersistence<T> GetProvider<T>(IDbTransaction transaction)
         {
             IDataPersistence<T> res = null;
 
-            if (IsEntidad(typeof(T)))
+            if (IsEntity(typeof(T)))
             {
                 string proveedorPers = ConfigurationManager.AppSettings["proveedorPersistencia"];
                 string assemblyPers = ConfigurationManager.AppSettings["emsambladoProveedorPersistencia"];
@@ -114,7 +113,7 @@ namespace Memento.DataAccess
         /// </summary>
         /// <param name="type">Tipo</param>
         /// <returns>Verdadero si el tipo hereda de Entidad</returns>
-        private static bool IsEntidad(Type type)
+        private static bool IsEntity(Type type)
         {
             bool res = false;
 

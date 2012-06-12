@@ -8,6 +8,7 @@ using System.Reflection;
 
 using Memento.DataAccess.Interfaces;
 using Memento.DataAccess.Utils;
+using Memento.Persistence.Commons;
 
 
 namespace Memento.DataAccess.OleDb
@@ -17,7 +18,7 @@ namespace Memento.DataAccess.OleDb
     /// para ello se ha utilizado el servicio de acceso a BBDD de OleDb
     /// </summary>
     /// <typeparam name="T">Tipo de la entidad con la que se va operar</typeparam>
-    public class BdPersistence<T> : IDataPersistence<T>, IDisposable
+    public class BdPersistence<T> : IDisposable, IDataPersistence<T> where T: Entity
     {
 
         #region Constantes
@@ -87,9 +88,9 @@ namespace Memento.DataAccess.OleDb
         /// </summary>
         /// <param name="entidad">Entidad que se desea persistir</param>
         /// <returns>Identificador de la entidad persistida</returns>
-        public object InsertarEntidad(T entidad)
+        public object InsertEntity(Entity entidad)
         {
-            Query query = DbUtil<T>.GetInsert(entidad);
+            Query query = DbUtil<T>.GetInsert((T)entidad);
 
             object id;
 
@@ -106,9 +107,8 @@ namespace Memento.DataAccess.OleDb
             Type tId = tipoT.GetProperty(tipoT.Name + "Id").PropertyType;
 
             Type nullType = Nullable.GetUnderlyingType(tId);
-            Object nullValue = null;
 
-            nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
+            object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
 
             return nullValue;
         }
@@ -117,9 +117,9 @@ namespace Memento.DataAccess.OleDb
         /// Método que actualiza una entidad
         /// </summary>
         /// <param name="entidad">Entidad actualizada</param>
-        public void ModificarEntidad(T entidad)
+        public void UpdateEntity(Entity entidad)
         {
-            Query query = DbUtil<T>.GetUpdate(entidad);
+            Query query = DbUtil<T>.GetUpdate((T)entidad);
 
             servicioDatos.CommandText = query.ToUpdate();
 
@@ -130,7 +130,7 @@ namespace Memento.DataAccess.OleDb
         /// Método que realiza un borrado lógico de la entidad
         /// </summary>
         /// <param name="entidadId">Identificador de la entidad a eliminar</param>
-        public void EliminarEntidad(object entidadId)
+        public void DeleteEntity(object entidadId)
         {
             Query query = DbUtil<T>.GetDelete(entidadId);
 
@@ -146,7 +146,7 @@ namespace Memento.DataAccess.OleDb
         /// </summary>
         /// <param name="entidadId">Identificador de la entidad</param>
         /// <returns>Entidad que se recupera</returns>
-        public IDataReader GetEntidad(object entidadId)
+        public IDataReader GetEntity(object entidadId)
         {
             T aux = DbUtil<T>.GetPlantillaEntidad();
             Type gType = aux.GetType();
@@ -154,9 +154,7 @@ namespace Memento.DataAccess.OleDb
             PropertyInfo pPk = gType.GetProperty(gType.Name + "Id");
 
             Type nullType = Nullable.GetUnderlyingType(pPk.PropertyType);
-            Object nullValue = null;
-
-            nullValue = nullType != null ? Convert.ChangeType(entidadId, nullType) : entidadId;
+            Object nullValue = nullType != null ? Convert.ChangeType(entidadId, nullType) : entidadId;
 
             pPk.SetValue(aux, nullValue, null);
 
@@ -171,7 +169,7 @@ namespace Memento.DataAccess.OleDb
         /// Método que devuelve todas las entidades activas
         /// </summary>
         /// <returns>Entidades activas</returns>
-        public IDataReader GetEntidades()
+        public IDataReader GetEntities()
         {
             T aux = DbUtil<T>.GetPlantillaEntidad();
 
@@ -188,9 +186,9 @@ namespace Memento.DataAccess.OleDb
         /// </summary>
         /// <param name="entidadFiltro">Entidad utilizada de filtro</param>
         /// <returns>Entidades filtradas</returns>
-        public IDataReader GetEntidades(T entidadFiltro)
+        public IDataReader GetEntities(Entity entidadFiltro)
         {
-            Query query = DbUtil<T>.GetQuery(entidadFiltro);
+            Query query = DbUtil<T>.GetQuery((T)entidadFiltro);
 
             servicioDatos.CommandText = query.ToSelect();
 
@@ -201,7 +199,7 @@ namespace Memento.DataAccess.OleDb
         /// Método que devuelve un DataSet con todas las entidades activas
         /// </summary>
         /// <returns>DataSet con las entidades activas</returns>
-        public DataSet GetEntidadesDs()
+        public DataSet GetEntitiesDs()
         {
             T aux = DbUtil<T>.GetPlantillaEntidad();
 
@@ -222,9 +220,9 @@ namespace Memento.DataAccess.OleDb
         /// </summary>
         /// <param name="entidadFiltro">Entidad utilizada de filtro</param>
         /// <returns>DataSet con las entidades filtradas</returns>
-        public DataSet GetEntidadesDs(T entidadFiltro)
+        public DataSet GetEntitiesDs(Entity entidadFiltro)
         {
-            Query query = DbUtil<T>.GetQuery(entidadFiltro);
+            Query query = DbUtil<T>.GetQuery((T)entidadFiltro);
 
             OleDbDataAdapter adapter = new OleDbDataAdapter(query.ToSelect(),
                 servicioDatos.Connection as OleDbConnection);
@@ -242,7 +240,7 @@ namespace Memento.DataAccess.OleDb
         /// <param name="storeProcedure">Nombre del procedimiento</param>
         /// <param name="parametros">Parametros necesitados por el procedimiento</param>
         /// <returns>Dataset con los resultados</returns>
-        public DataSet GetEntidadesDs(string storeProcedure, IDictionary<string, object> parametros)
+        public DataSet GetEntitiesDs(string storeProcedure, IDictionary<string, object> parametros)
         {
             foreach (string key in parametros.Keys)
             {
@@ -267,7 +265,7 @@ namespace Memento.DataAccess.OleDb
 
 
         /// <summary>
-        /// Método que devuelve una conexión de la Enterprise library 2006
+        /// Método que devuelve una conexión de ADO.Net con OLE DB
         /// </summary>
         /// <returns></returns>
         public IDbConnection GetConnection()
@@ -278,7 +276,10 @@ namespace Memento.DataAccess.OleDb
 
         #endregion
 
-
+        /// <summary>
+        /// Se utiliza el método Dispose del objeto para asegurarnos de cerrar la conexión
+        /// en caso de estar aún abierta
+        /// </summary>
         public void Dispose()
         {
             if(servicioDatos !=null)

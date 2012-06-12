@@ -1,3 +1,5 @@
+using Memento.Persistence.Commons;
+
 namespace Memento.Persistence
 {
     /// <summary>

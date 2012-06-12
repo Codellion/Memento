@@ -82,6 +82,10 @@
       <Project>{20758A66-2381-468A-82C1-DA73394C7DBB}</Project>
       <Name>Memento.DataAccess.EntLib2</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Memento.DataAccess.EntLib5\Memento.DataAccess.EntLib5.csproj">
+      <Project>{2F59BEAB-9770-435E-811E-D28034F904A1}</Project>
+      <Name>Memento.DataAccess.EntLib5</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Memento.DataAccess.Odbc\Memento.DataAccess.Odbc.csproj">
       <Project>{56E885FC-444A-4E76-838D-196ACEE34934}</Project>
       <Name>Memento.DataAccess.Odbc</Name>
@@ -90,9 +94,9 @@
       <Project>{3B5385DC-2410-4FBA-926A-2FB386503B0D}</Project>
       <Name>Memento.DataAccess.OleDb</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Memento.DataAccess.EntLib5\Memento.DataAccess.EntLib5.csproj">
-      <Project>{2F59BEAB-9770-435E-811E-D28034F904A1}</Project>
-      <Name>Memento.DataAccess.EntLib5</Name>
+    <ProjectReference Include="..\Memento.Persistence.Commons\Memento.Persistence.Commons.csproj">
+      <Project>{8F1D7931-99FA-4C36-8CDA-BE4DFBF08A0E}</Project>
+      <Name>Memento.Persistence.Commons</Name>
     </ProjectReference>
     <ProjectReference Include="..\Memento.Persistence\Memento.Persistence.csproj">
       <Project>{2F069557-B0FA-4182-BA7E-B20A0AA138EC}</Project>
