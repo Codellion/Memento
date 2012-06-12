@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{B90AAB8C-608D-4128-90E4-7A8DAC5FD5AA}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Memento.Test.App</RootNamespace>
+    <AssemblyName>Memento.Test.App</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Entities.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Entities.Designer.cs">
+      <DependentUpon>Entities.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Entities.resx">
+      <DependentUpon>Entities.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Memento.DataAccess.EntLib2\Memento.DataAccess.EntLib2.csproj">
+      <Project>{20758A66-2381-468A-82C1-DA73394C7DBB}</Project>
+      <Name>Memento.DataAccess.EntLib2</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Memento.DataAccess.Odbc\Memento.DataAccess.Odbc.csproj">
+      <Project>{56E885FC-444A-4E76-838D-196ACEE34934}</Project>
+      <Name>Memento.DataAccess.Odbc</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Memento.DataAccess.OleDb\Memento.DataAccess.OleDb.csproj">
+      <Project>{3B5385DC-2410-4FBA-926A-2FB386503B0D}</Project>
+      <Name>Memento.DataAccess.OleDb</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Memento.DataAccess.EntLib5\Memento.DataAccess.EntLib5.csproj">
+      <Project>{2F59BEAB-9770-435E-811E-D28034F904A1}</Project>
+      <Name>Memento.DataAccess.EntLib5</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Memento.Persistence\Memento.Persistence.csproj">
+      <Project>{2F069557-B0FA-4182-BA7E-B20A0AA138EC}</Project>
+      <Name>Memento.Persistence</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Memento.Test.Entities\Memento.Test.Entities.csproj">
+      <Project>{892C15B6-7281-4743-9543-E6F32CB5EC48}</Project>
+      <Name>Memento.Test.Entities</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
