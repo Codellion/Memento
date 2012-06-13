@@ -9,7 +9,7 @@ namespace Memento.Persistence.Interfaces
     /// Interfaz de operaciones del módulo de persistencia
     /// </summary>
     /// <typeparam name="T">Tipo de la Entidad sobre la que trabajará el módulo de persistencia</typeparam>
-    public interface IPersistence<out T>
+    public interface IPersistence<T> where T: Entity
     {
         /// <summary>
         /// Método que persiste una T y la devuelve 
@@ -17,13 +17,13 @@ namespace Memento.Persistence.Interfaces
         /// </summary>
         /// <param name="entity">T que se desea persistir</param>
         /// <returns>Entidad persistida</returns>
-        T InsertEntity(Entity entity);
+        T InsertEntity(T entity);
 
         /// <summary>
         /// Método que actualiza una Entidad
         /// </summary>
         /// <param name="entity">Entidad actualizada</param>
-        void UpdateEntity(Entity entity);
+        void UpdateEntity(T entity);
 
         /// <summary>
         /// Método que realiza un borrado lógico de la Entidad
@@ -43,7 +43,7 @@ namespace Memento.Persistence.Interfaces
         /// Método que devuelve todas las Entidades activas
         /// </summary>
         /// <returns>Entidades activas</returns>
-        IList<Entity> GetEntities();
+        IList<T> GetEntities();
 
         /// <summary>
         /// Método que devuelve todas las Entidades que 
@@ -51,7 +51,7 @@ namespace Memento.Persistence.Interfaces
         /// </summary>
         /// <param name="filterEntity">Entidad utilizada de filtro</param>
         /// <returns>Entidades filtradas</returns>
-        IList<Entity> GetEntities(Entity filterEntity);
+        IList<T> GetEntities(T filterEntity);
 
         /// <summary>
         /// Método que devuelve un DataSeT con todas las Entidades activas
@@ -65,7 +65,7 @@ namespace Memento.Persistence.Interfaces
         /// </summary>
         /// <param name="filterEntity">Entidad utilizada de filtro</param>
         /// <returns>DataSeT con las Entidades filtradas</returns>
-        DataSet GetEntitiesDs(Entity filterEntity);
+        DataSet GetEntitiesDs(T filterEntity);
 
         /// <summary>
         /// Método que devuelve un dataset con los datos devueltos por el procedimiento indicado

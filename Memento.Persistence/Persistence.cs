@@ -95,7 +95,7 @@ namespace Memento.Persistence
         /// </summary>
         /// <param name="entity">Entidad que se dará de alta</param>
         /// <returns>Entidad con el identificador de BBDD informado</returns>
-        public T InsertEntity(Entity entity)
+        public T InsertEntity(T entity)
         {
             object id = PersistenciaDatos.InsertEntity(entity);
 
@@ -117,7 +117,7 @@ namespace Memento.Persistence
         /// Realiza las modificaciones sobre una entidad en BBDD
         /// </summary>
         /// <param name="entity">Entidad modificada</param>
-        public void UpdateEntity(Entity entity)
+        public void UpdateEntity(T entity)
         {
             PersistenciaDatos.UpdateEntity(entity);
         }
@@ -155,9 +155,9 @@ namespace Memento.Persistence
         /// Devuelve una lista de todas las entidades activas existentes en BBDD
         /// </summary>
         /// <returns>Lista da entidades</returns>
-        public IList<Entity> GetEntities()
+        public IList<T> GetEntities()
         {
-            IList<Entity> entidades = new List<Entity>();
+            IList<T> entidades = new List<T>();
 
             IDataReader dr = PersistenciaDatos.GetEntities();
 
@@ -178,9 +178,9 @@ namespace Memento.Persistence
         /// </summary>
         /// <param name="filterEntity">Entidad que actua como filtro</param>
         /// <returns>Lista de entidades</returns>
-        public IList<Entity> GetEntities(Entity filterEntity)
+        public IList<T> GetEntities(T filterEntity)
         {
-            IList<Entity> entidades = new List<Entity>();
+            IList<T> entidades = new List<T>();
 
             IDataReader dr = PersistenciaDatos.GetEntities(filterEntity);
 
@@ -210,7 +210,7 @@ namespace Memento.Persistence
         /// </summary>
         /// <param name="filterEntity">Entidad que actua como filtro</param>
         /// <returns>Dataset con el resultado del filtro</returns>
-        public DataSet GetEntitiesDs(Entity filterEntity)
+        public DataSet GetEntitiesDs(T filterEntity)
         {
             return PersistenciaDatos.GetEntitiesDs(filterEntity);
         }

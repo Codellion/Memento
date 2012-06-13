@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -102,6 +103,8 @@ namespace Memento.Test.App
             IPersistence<Linea> pers = new Persistence<Linea>();
 
             Linea linea = pers.GetEntity(1);
+
+            IList<Linea> testLineas = pers.GetEntities(new Linea());
 
             List<Linea> lineas = linea.Producto.Value.Lineas.Value;
 
