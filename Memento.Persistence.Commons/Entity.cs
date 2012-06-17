@@ -19,12 +19,12 @@ namespace Memento.Persistence.Commons
         /// <summary>
         /// Nombre de la tabla en BBDD
         /// </summary>
-        private string _tabla;
+        private string _table;
 
         /// <summary>
         /// Lista de propiedades que contienen una referencia hacía la entidad
         /// </summary>
-        private List<string> _referencias;
+        private List<string> _references;
 
         /// <summary>
         /// Booleano que informa si la entidad esta activa o no
@@ -38,10 +38,10 @@ namespace Memento.Persistence.Commons
         /// <summary>
         /// Lista de propiedades que contienen una referencia hacía la entidad
         /// </summary>
-        public List<string> Referencias
+        public List<string> References
         {
-            get { return _referencias ?? (_referencias = new List<string>()); }
-            set { _referencias = value; }
+            get { return _references ?? (_references = new List<string>()); }
+            set { _references = value; }
         }
 
         /// <summary>
@@ -56,10 +56,10 @@ namespace Memento.Persistence.Commons
         /// <summary>
         /// Nombre de la tabla en BBDD
         /// </summary>
-        public string Tabla
+        public string Table
         {
-            get { return _tabla; }
-            set { _tabla = value; }
+            get { return _table; }
+            set { _table = value; }
         }
 
         #endregion
@@ -68,25 +68,22 @@ namespace Memento.Persistence.Commons
         /// Constructor de la clase donde se invoca el método de configurar entidad
         /// para las clases que heredan de Entidad establezcan sus configuraciones
         /// </summary>
-        public Entity()
+        protected Entity()
         {
             NameValueCollection section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
 
-            Tabla = section[this.GetType().FullName];
+            string fullName = GetType().FullName;
+            if (fullName != null && section != null) Table = section[fullName];
 
-            Referencias = new List<string>();
+            References = new List<string>();
 
             foreach (PropertyInfo prop in GetType().GetProperties())
             {
-                if(prop.PropertyType.Name.Equals("Reference`1"))
+                if(prop.PropertyType.BaseType == typeof(EaterEntity))
                 {
-                    Referencias.Add(prop.Name);
+                    References.Add(prop.Name);
                 }
             }
         }
-
-        #region Métodos a implementar
-
-        #endregion
     }
 }

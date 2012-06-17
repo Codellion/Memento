@@ -245,7 +245,7 @@ namespace Memento.Persistence
             {
                 Type tipoEntidad = targetObject.GetType();
 
-                PropertyInfo refsInfo = tipoEntidad.GetProperty("Referencias");
+                PropertyInfo refsInfo = tipoEntidad.GetProperty("References");
 
                 IList<String> referencias = (IList<String>)refsInfo.GetValue(targetObject, null);
 
@@ -260,7 +260,7 @@ namespace Memento.Persistence
                     {
                         PropertyInfo sprop = tipoEntidad.GetProperty(subProp);
 
-                        PropertyInfo subRefsInfo = tipoEntidad.GetProperty("Referencias");
+                        PropertyInfo subRefsInfo = tipoEntidad.GetProperty("References");
 
                         //Comprobamos si la propiedad es una referencia del objeto para 
                         //Saber si tenemos que instanciarla
@@ -278,7 +278,7 @@ namespace Memento.Persistence
                                 {
                                     if (svalue == null)
                                     {
-                                        if(sprop.PropertyType.Name.Equals("Reference`1"))
+                                        if(sprop.PropertyType.BaseType == typeof(EaterEntity))
                                         {
                                             object refValue =
                                                 Activator.CreateInstance(sprop.PropertyType.GetGenericArguments()[0]); 
@@ -302,7 +302,7 @@ namespace Memento.Persistence
                                     }
                                     else
                                     {
-                                         if(sprop.PropertyType.Name.Equals("Reference`1"))
+                                        if (sprop.PropertyType.BaseType == typeof(EaterEntity))
                                          {
                                              tipoEntidad = sprop.PropertyType.GetGenericArguments()[0];
                                              aux = svalue.GetType().GetProperty("Value").GetValue(svalue, null);
@@ -358,7 +358,7 @@ namespace Memento.Persistence
         private static object TryParserNullBoolean(PropertyInfo prop, object valor)
         {
             if (prop.PropertyType == typeof(bool)
-                                        || prop.PropertyType == typeof(bool?))
+                || prop.PropertyType == typeof(bool?))
             {
                 bool res;
 

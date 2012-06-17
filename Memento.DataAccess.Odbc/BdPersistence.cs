@@ -148,7 +148,7 @@ namespace Memento.DataAccess.Odbc
         /// <returns>Entidad que se recupera</returns>
         public IDataReader GetEntity(object entidadId)
         {
-            T aux = DbUtil<T>.GetPlantillaEntidad();
+            T aux = Activator.CreateInstance<T>();
             Type gType = aux.GetType();
 
             PropertyInfo pPk = gType.GetProperty(gType.Name + "Id");
@@ -172,7 +172,7 @@ namespace Memento.DataAccess.Odbc
         /// <returns>Entidades activas</returns>
         public IDataReader GetEntities()
         {
-            T aux = DbUtil<T>.GetPlantillaEntidad();
+            T aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 
@@ -202,7 +202,7 @@ namespace Memento.DataAccess.Odbc
         /// <returns>DataSet con las entidades activas</returns>
         public DataSet GetEntitiesDs()
         {
-            T aux = DbUtil<T>.GetPlantillaEntidad();
+            T aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 

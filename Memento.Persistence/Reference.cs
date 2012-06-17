@@ -6,7 +6,7 @@ namespace Memento.Persistence
     /// Clase que representa la referencia de una entidad
     /// </summary>
     /// <typeparam name="T">Tipo del valor almacenado</typeparam>
-    public class Reference<T> where T:Entity
+    public class Reference<T> : EaterEntity where T:Entity
     {
         #region Atributos
 

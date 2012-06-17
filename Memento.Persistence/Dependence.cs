@@ -11,7 +11,7 @@ namespace Memento.Persistence
     /// permitiendo la carga perezosa de dichos datos
     /// </summary>
     /// <typeparam name="T">Tipo del valor almacenado</typeparam>
-    public class Dependence<T> where T:Entity
+    public class Dependence<T> : LazyEntity where T : Entity
     {
         #region Atributos
 
@@ -74,6 +74,7 @@ namespace Memento.Persistence
                 }
                 catch (Exception)
                 {
+                    //TODO Registrar error
                 }
 
                 return _value;
