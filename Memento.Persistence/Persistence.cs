@@ -30,9 +30,9 @@ namespace Memento.Persistence
         /// <summary>
         /// Atributo privado del servicio de datos de persistencia
         /// </summary>
-        private IDataPersistence<T> _persistenciaDatos;
+        private IDataPersistence<T> _persistenceService;
 
-        private DataContext _contexto;
+        private DataContext _context;
 
         #endregion
 
@@ -43,25 +43,25 @@ namespace Memento.Persistence
         /// se llama al Proveedor de servicio de persistencia para que 
         /// devuelva una implementación de dicha interfaz
         /// </summary>
-        public IDataPersistence<T> PersistenciaDatos
+        public IDataPersistence<T> PersistenceService
         {
             get
             {
-                if(_persistenciaDatos == null)
+                if(_persistenceService == null)
                 {
-                    if(_contexto != null)
+                    if(_context != null)
                     {
-                        _persistenciaDatos = DataFactoryProvider.GetProvider<T>(_contexto.Transaccion);
+                        _persistenceService = DataFactoryProvider.GetProvider<T>(_context.Transaction);
                     }
                     else
                     {
-                        _persistenciaDatos = DataFactoryProvider.GetProvider<T>(null);
+                        _persistenceService = DataFactoryProvider.GetProvider<T>(null);
                     }
                 }
 
-                return _persistenciaDatos;
+                return _persistenceService;
             }
-            set { _persistenciaDatos = value; }
+            set { _persistenceService = value; }
         }
 
         #endregion
@@ -83,7 +83,7 @@ namespace Memento.Persistence
         /// <param name="contexto">Contexto transaccional</param>
         public Persistence(DataContext contexto)
         {
-            _contexto = contexto;
+            _context = contexto;
         }
 
         #endregion
@@ -95,22 +95,62 @@ namespace Memento.Persistence
         /// </summary>
         /// <param name="entity">Entidad que se dará de alta</param>
         /// <returns>Entidad con el identificador de BBDD informado</returns>
-        public T InsertEntity(T entity)
+        public T PersistEntity(T entity)
         {
-            object id = PersistenciaDatos.InsertEntity(entity);
+            if(entity.GetEntityId() == null)
+            {
+                if (entity.Dependences.Count > 0)
+                {
+                    object id = null;
 
-            Type tipoEntidad = typeof (T);
+                    if (_context == null)
+                    {
+                        using (DataContext dtContext = new DataContext())
+                        {
+                            try
+                            {
+                                IDataPersistence<T> pserServAux =
+                                    DataFactoryProvider.GetProvider<T>(dtContext.Transaction);
+                            
+                                id = pserServAux.InsertEntity(entity);
 
-            PropertyInfo propId = tipoEntidad.GetProperty(tipoEntidad.Name + "Id");
-            Type nullType = Nullable.GetUnderlyingType(propId.PropertyType);
+                                ManageDependence(entity, id, dtContext);
+                                dtContext.SaveChanges();
+                            }
+                            catch (Exception ex)
+                            {
+                                dtContext.Rollback();
+                                throw;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        id = PersistenceService.InsertEntity(entity);
 
-            object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
+                        ManageDependence(entity, id, _context);
+                    }
 
-            propId.SetValue(entity, nullValue, null);
+                    Type tipoEntidad = typeof(T);
 
-            object res = entity;
+                    PropertyInfo propId = tipoEntidad.GetProperty(tipoEntidad.Name + "Id");
+                    Type nullType = Nullable.GetUnderlyingType(propId.PropertyType);
 
-            return (T)res;
+                    object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
+
+                    propId.SetValue(entity, nullValue, null);
+                }
+                else
+                {
+                    entity = DoInsertEntity(entity);
+                }
+            }
+            else
+            {
+                UpdateEntity(entity);
+            }
+
+            return entity;
         }
 
         /// <summary>
@@ -119,7 +159,7 @@ namespace Memento.Persistence
         /// <param name="entity">Entidad modificada</param>
         public void UpdateEntity(T entity)
         {
-            PersistenciaDatos.UpdateEntity(entity);
+            PersistenceService.UpdateEntity(entity);
         }
 
         /// <summary>
@@ -129,7 +169,7 @@ namespace Memento.Persistence
         /// <param name="entitydId">Identificador de la entidad que se quiere eliminar</param>
         public void DeleteEntity(object entitydId)
         {
-            PersistenciaDatos.DeleteEntity(entitydId);
+            PersistenceService.DeleteEntity(entitydId);
         }
 
         /// <summary>
@@ -140,7 +180,7 @@ namespace Memento.Persistence
         /// <returns>Entidad</returns>
         public T GetEntity(object entitydId)
         {
-            IDataReader dr = PersistenciaDatos.GetEntity(entitydId);
+            IDataReader dr = PersistenceService.GetEntity(entitydId);
             dr.Read();
 
             //Realizamos el mapeo de la entidad desde los datos de la fila
@@ -159,7 +199,7 @@ namespace Memento.Persistence
         {
             IList<T> entidades = new List<T>();
 
-            IDataReader dr = PersistenciaDatos.GetEntities();
+            IDataReader dr = PersistenceService.GetEntities();
 
             //Realizamos el mapeo de las entidades desde los datos de cada fila
             while (dr.Read())
@@ -182,7 +222,7 @@ namespace Memento.Persistence
         {
             IList<T> entidades = new List<T>();
 
-            IDataReader dr = PersistenciaDatos.GetEntities(filterEntity);
+            IDataReader dr = PersistenceService.GetEntities(filterEntity);
 
             //Realizamos el mapeo de las entidades desde los datos de cada fila
             while (dr.Read())
@@ -201,7 +241,7 @@ namespace Memento.Persistence
         /// <returns>Dataset con el resultado</returns>
         public DataSet GetEntitiesDs()
         {
-            return PersistenciaDatos.GetEntitiesDs();
+            return PersistenceService.GetEntitiesDs();
         }
 
         /// <summary>
@@ -212,7 +252,7 @@ namespace Memento.Persistence
         /// <returns>Dataset con el resultado del filtro</returns>
         public DataSet GetEntitiesDs(T filterEntity)
         {
-            return PersistenciaDatos.GetEntitiesDs(filterEntity);
+            return PersistenceService.GetEntitiesDs(filterEntity);
         }
 
         /// <summary>
@@ -224,7 +264,7 @@ namespace Memento.Persistence
         /// <returns>Dataset con los resultados</returns>
         public DataSet GetEntitiesDs(string storeProcedure, IDictionary<string, object> procParams)
         {
-            return PersistenciaDatos.GetEntitiesDs(storeProcedure, procParams);
+            return PersistenceService.GetEntitiesDs(storeProcedure, procParams);
         }
 
         #endregion
@@ -384,6 +424,169 @@ namespace Memento.Persistence
             return nullValue;
         }
 
+        private T DoInsertEntity(T entity)
+        {
+            object id = PersistenceService.InsertEntity(entity);
+
+            Type tipoEntidad = typeof(T);
+
+            PropertyInfo propId = tipoEntidad.GetProperty(tipoEntidad.Name + "Id");
+            Type nullType = Nullable.GetUnderlyingType(propId.PropertyType);
+
+            object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
+
+            propId.SetValue(entity, nullValue, null);
+
+            return entity;
+        }
+
+        /// <summary>
+        /// Se encarga de persistir u modificar las dependencias relacionadas con una entidad
+        /// </summary>
+        /// <param name="entity">Entidad que contiene las dependencias</param>
+        /// /// <param name="entityId">Identificador de la entidad</param>
+        /// /// <param name="dtContext">Contexto de ejecución</param>
+        private void ManageDependence(T entity, object entityId, DataContext dtContext)
+        {
+            Type tipoEntidad = typeof (T);
+
+            foreach (string propDepName in entity.Dependences)
+            {
+                PropertyInfo depProp = tipoEntidad.GetProperty(propDepName);
+
+                //Obtenemos la dependencia
+                object depValue = depProp.GetValue(entity, null);
+
+                //Obtenemos el servicio de persistencia oportuno para el tipo de la dependencia
+                Type tPersServ = typeof (Persistence<>);
+
+                tPersServ = tPersServ.MakeGenericType(depProp.PropertyType.GetGenericArguments()[0]);
+
+                ConstructorInfo constructor;
+                object pService = null;
+
+                if(dtContext == null)
+                {
+                    constructor = tPersServ.GetConstructor(new Type[] {});
+                    if(constructor != null)
+                    {
+                        pService = constructor.Invoke(new object[] { });    
+                    }
+                }
+                else
+                {
+                    constructor = tPersServ.GetConstructor(new Type[] { typeof(DataContext) });
+                    if (constructor != null)
+                    {
+                        pService = constructor.Invoke(new object[] {dtContext});
+                    }
+                }
+
+                if(pService != null)
+                {
+                    MethodInfo insertEntity = tPersServ.GetMethod("InsertEntity");
+
+                    //Obtenemos el valor de la dependencia
+                    object depValueImplict   = depValue.GetType().GetProperty("Value").GetValue(depValue, null);
+
+                    //Comprobamos si es única o múltiple
+                    if(!depValueImplict.GetType().Name.StartsWith("List"))
+                    {
+                        bool isDirty = (bool)depValue.GetType()
+                            .GetProperty("IsDirty").GetValue(depValue, null);
+
+                        //Si la dependencia no ha sido modificada no hacemos nada
+                        if (!isDirty)
+                        {
+                            return;
+                        }
+                                                
+                        //Actualizamos la referencia de la entidad padre recien creada
+                        PropertyInfo refEntityProp = depValueImplict.GetType().GetProperty(tipoEntidad.Name);
+                        object refEntity = refEntityProp.GetValue(depValueImplict, null);
+
+                        if (refEntity == null)
+                        {
+                            Type tReference = typeof(Reference<>);
+                            tReference =
+                                tReference.MakeGenericType(typeof(T));
+
+                            refEntity = Activator.CreateInstance(tReference,
+                                new object[] { Activator.CreateInstance<T>() });
+
+                        }
+
+                        object refEntityValue = refEntity.GetType().GetProperty("Value").GetValue(refEntity, null);
+
+                        refEntityValue.GetType().GetProperty(tipoEntidad.Name + "Id")
+                               .SetValue(refEntityValue, entityId, null);
+
+                        refEntityProp.SetValue(depValueImplict, refEntity, null);
+
+                        depValueImplict = insertEntity.Invoke(pService, new object[] { depValueImplict });    
+                        depValue.GetType().GetProperty("Value").SetValue(depValue, depValueImplict, null);
+                    }
+                    else
+                    {
+                        //Obtenemos el iterador de las dependencias e insertamos cada una de ellas si procede
+                        MethodInfo getEnumerator = depValueImplict.GetType().GetMethod("GetEnumerator");
+
+                        bool isDirty = (bool) depValue.GetType()
+                            .GetProperty("IsDirty").GetValue(depValue, null);
+
+                        //Si la colección no ha sido modificada no hacemos nada
+                        if(!isDirty)
+                        {
+                            return;   
+                        }
+
+                        object enumerator = getEnumerator.Invoke(depValueImplict, null);
+
+                        MethodInfo moveNext = enumerator.GetType().GetMethod("MoveNext");
+
+                        while ((bool) moveNext.Invoke(enumerator, null))
+                        {
+                            PropertyInfo currentDepProp = enumerator.GetType().GetProperty("Current");
+                            
+                            if(currentDepProp != null)
+                            {
+                                object currentDepValue = currentDepProp.GetValue(enumerator, null);
+
+                                //Actualizamos la referencia de la entidad padre recien creada
+                                
+                                PropertyInfo refEntityProp = currentDepValue.GetType().GetProperty(tipoEntidad.Name);
+
+                                object refEntity = refEntityProp.GetValue(currentDepValue, null);
+
+                                if(refEntity == null)
+                                {
+                                    Type tReference = typeof (Reference<>);
+                                    tReference =
+                                        tReference.MakeGenericType(refEntityProp.PropertyType.GetGenericArguments());
+
+                                    refEntity = Activator.CreateInstance(tReference, 
+                                        new object[]{ Activator.CreateInstance<T>()});
+                                  
+                                }
+
+                                object refEntityValue = refEntity.GetType().GetProperty("Value").GetValue(refEntity, null);
+
+                                refEntityValue.GetType().GetProperty(tipoEntidad.Name + "Id")
+                                       .SetValue(refEntityValue, entityId, null);
+
+                                refEntityProp.SetValue(currentDepValue, refEntity, null);
+
+                                insertEntity.Invoke(pService, new object[] { currentDepValue });                                
+                            }
+                        }
+                    }
+
+                    //Seteamos el valor insertado
+                    depProp.SetValue(entity, depValue, null);
+                }
+            }
+        }
+
         /// <summary>
         /// Convierte una fila de datos obtenida de una consulta
         /// en una entidad del módelo de dominio
@@ -413,7 +616,7 @@ namespace Memento.Persistence
         /// </summary>
         /// <param name="dr">Lector posicionado en la fila</param>
         /// <returns>Entidad que representa los datos de la fila</returns>
-        public static T ParseRowToEntidad(DataRow dr)
+        public static T ParseRowToEntity(DataRow dr)
         {
             int numCols = dr.Table.Columns.Count;
 

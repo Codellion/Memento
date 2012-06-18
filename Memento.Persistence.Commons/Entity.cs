@@ -27,9 +27,19 @@ namespace Memento.Persistence.Commons
         private List<string> _references;
 
         /// <summary>
+        /// Lista de propiedades que contienen una dependecia de la entidad
+        /// </summary>
+        private List<string> _dependences;
+
+        /// <summary>
         /// Booleano que informa si la entidad esta activa o no
         /// </summary>
         private bool _activo = true;
+
+        /// <summary>
+        /// Lista de propiedades que contienen no son persistentes
+        /// </summary>
+        private List<string> _transientProps;
 
         #endregion
 
@@ -42,6 +52,15 @@ namespace Memento.Persistence.Commons
         {
             get { return _references ?? (_references = new List<string>()); }
             set { _references = value; }
+        }
+
+        /// <summary>
+        /// Lista de propiedades que contienen una dependecia de la entidad
+        /// </summary>
+        public List<string> Dependences
+        {
+            get { return _dependences ?? (_dependences = new List<string>()); }
+            set { _dependences = value; }
         }
 
         /// <summary>
@@ -62,6 +81,15 @@ namespace Memento.Persistence.Commons
             set { _table = value; }
         }
 
+        /// <summary>
+        /// Lista de propiedades que contienen no son persistentes
+        /// </summary>
+        public List<string> TransientProps
+        {
+            get { return _transientProps; }
+            set { _transientProps = value; }
+        }
+
         #endregion
 
         /// <summary>
@@ -70,12 +98,20 @@ namespace Memento.Persistence.Commons
         /// </summary>
         protected Entity()
         {
+            TransientProps = new List<string>(4);
+
+            TransientProps.Add("TransientProps");
+            TransientProps.Add("Table");
+            TransientProps.Add("Dependences");
+            TransientProps.Add("References");
+
             NameValueCollection section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
 
             string fullName = GetType().FullName;
             if (fullName != null && section != null) Table = section[fullName];
 
             References = new List<string>();
+            Dependences = new List<string>();
 
             foreach (PropertyInfo prop in GetType().GetProperties())
             {
@@ -83,7 +119,29 @@ namespace Memento.Persistence.Commons
                 {
                     References.Add(prop.Name);
                 }
+                else if(prop.PropertyType.BaseType == typeof(LazyEntity))
+                {
+                    Dependences.Add(prop.Name);
+                }
             }
+        }
+
+        /// <summary>
+        /// Devuelve el identificador de la entidad
+        /// </summary>
+        /// <returns></returns>
+        public object GetEntityId()
+        {
+            return GetType().GetProperty((GetType().Name + "Id")).GetValue(this, null);
+        }
+
+        /// <summary>
+        /// Devuelve el nombre del identificador de la entidad
+        /// </summary>
+        /// <returns></returns>
+        public object GetEntityIdName()
+        {
+            return GetType().Name + "Id";
         }
     }
 }

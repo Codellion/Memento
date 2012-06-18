@@ -1,3 +1,4 @@
+using System;
 using Memento.Persistence.Commons;
 
 namespace Memento.Persistence
@@ -40,6 +41,17 @@ namespace Memento.Persistence
         public Reference()
         {
             
+        }
+
+        /// <summary>
+        /// Constructor donde se establece el valor del id
+        /// </summary>
+        public Reference(object valueId)
+        {
+            Value = Activator.CreateInstance<T>();
+
+            Value.GetType().GetProperty(typeof(T).Name + "Id")
+                .SetValue(Value, valueId, null);
         }
 
         /// <summary>

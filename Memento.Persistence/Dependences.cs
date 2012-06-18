@@ -32,6 +32,11 @@ namespace Memento.Persistence
         /// </summary>
         private Entity _entityRef;
 
+        /// <summary>
+        /// Indica si la lista de dependencias fue creado por el usuario y no traida desde la BBDD
+        /// </summary>
+        private bool _isDirty;
+
         #endregion
 
         #region Propiedades
@@ -74,7 +79,7 @@ namespace Memento.Persistence
                 return _value;
             }
 
-            set { _value = value; }
+            set { IsDirty = true; _value = value; }
         }
 
         /// <summary>
@@ -96,6 +101,15 @@ namespace Memento.Persistence
             set { _referenceName = value; }
         }
 
+        /// <summary>
+        /// Indica si la lista de dependencias fue creado por el usuario y no traida desde la BBDD
+        /// </summary>
+        public bool IsDirty
+        {
+            get { return _isDirty; }
+            set { _isDirty = value; }
+        }
+
         #endregion
 
         #region Constructores
@@ -106,7 +120,25 @@ namespace Memento.Persistence
         /// </summary>
         public Dependences()
         {
-         
+            Value = new List<T>();
+        }
+
+        /// <summary>
+        /// Constructor donde se define la propiedad referenciada en la clase
+        /// dependiente
+        /// </summary>
+        public Dependences(T entity)
+        {
+            Value = new List<T> {entity};
+        }
+
+        /// <summary>
+        /// Constructor donde se define la propiedad referenciada en la clase
+        /// dependiente
+        /// </summary>
+        public Dependences(List<T> entities)
+        {
+            Value = entities;
         }
 
         /// <summary>
@@ -117,6 +149,7 @@ namespace Memento.Persistence
         /// <param name="entidad">Entidad que contiene la dependencia</param>
         public Dependences(string refName, Entity entidad)
         {
+            IsDirty = false;
             _referenceName = refName;
             _entityRef = entidad;
         }

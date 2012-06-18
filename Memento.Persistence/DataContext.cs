@@ -14,9 +14,9 @@ namespace Memento.Persistence
     {
         #region Atributos
 
-        private IDbTransaction _transaccion;
-        private IDbConnection _servicioDatos;
-        private bool _transaccionAbierta;
+        private IDbTransaction _transaction;
+        private IDbConnection _connection;
+        private bool _isOpenTransaction;
 
         #endregion
 
@@ -25,19 +25,19 @@ namespace Memento.Persistence
         /// <summary>
         /// Base de datos utilizada en la transacción
         /// </summary>
-        public IDbConnection ServicioDatos
+        public IDbConnection Connection
         {
-            get { return _servicioDatos; }
-            set { _servicioDatos = value; }
+            get { return _connection; }
+            set { _connection = value; }
         }
 
         /// <summary>
         /// Transacción en curso
         /// </summary>
-        public IDbTransaction Transaccion
+        public IDbTransaction Transaction
         {
-            get { return _transaccion; }
-            set { _transaccion = value; }
+            get { return _transaction; }
+            set { _transaction = value; }
         }
 
         #endregion
@@ -50,10 +50,10 @@ namespace Memento.Persistence
         /// </summary>
         public DataContext()
         {
-            ServicioDatos = DataFactoryProvider.GetConnection<Entity>();
-            ServicioDatos.Open();
-            Transaccion = ServicioDatos.BeginTransaction();
-            _transaccionAbierta = true;
+            Connection = DataFactoryProvider.GetConnection<Entity>();
+            Connection.Open();
+            Transaction = Connection.BeginTransaction();
+            _isOpenTransaction = true;
         }
 
         /// <summary>
@@ -63,10 +63,10 @@ namespace Memento.Persistence
         /// <param name="entornoBd">Entorno de aplicaciones</param>
         public DataContext(string entornoBd)
         {
-            ServicioDatos = DataFactoryProvider.GetConnection<Entity>(entornoBd);
-            ServicioDatos.Open();
-            Transaccion = ServicioDatos.BeginTransaction();
-            _transaccionAbierta = true;
+            Connection = DataFactoryProvider.GetConnection<Entity>(entornoBd);
+            Connection.Open();
+            Transaction = Connection.BeginTransaction();
+            _isOpenTransaction = true;
         }
 
         /// <summary>
@@ -75,10 +75,10 @@ namespace Memento.Persistence
         /// <param name="bd">Base de datos</param>
         public DataContext(IDbConnection bd)
         {
-            ServicioDatos = bd;
-            ServicioDatos.Open();
-            Transaccion = ServicioDatos.BeginTransaction();
-            _transaccionAbierta = true;
+            Connection = bd;
+            Connection.Open();
+            Transaction = Connection.BeginTransaction();
+            _isOpenTransaction = true;
         }
 
         #endregion
@@ -91,13 +91,13 @@ namespace Memento.Persistence
         /// </summary>
         public void Rollback()
         {
-            if (Transaccion != null)
+            if (Transaction != null)
             {
-                Transaccion.Rollback();
-                _transaccionAbierta = false;
+                Transaction.Rollback();
+                _isOpenTransaction = false;
             }
 
-            ServicioDatos.Close();
+            Connection.Close();
         }
 
         /// <summary>
@@ -105,13 +105,13 @@ namespace Memento.Persistence
         /// </summary>
         public void SaveChanges()
         {
-            if (Transaccion != null)
+            if (Transaction != null)
             {
-                Transaccion.Commit();
-                _transaccionAbierta = false;
+                Transaction.Commit();
+                _isOpenTransaction = false;
             }
 
-            ServicioDatos.Close();
+            Connection.Close();
         }
 
         #endregion
@@ -123,20 +123,20 @@ namespace Memento.Persistence
         /// </summary>
         public void Dispose()
         {
-            if (Transaccion != null)
+            if (Transaction != null)
             {
-                if(_transaccionAbierta)
+                if(_isOpenTransaction)
                 {
-                    Transaccion.Rollback();
-                    _transaccionAbierta = false;
+                    Transaction.Rollback();
+                    _isOpenTransaction = false;
                 }
 
-                Transaccion.Dispose();
+                Transaction.Dispose();
             }
 
-            if(ServicioDatos.State == ConnectionState.Open)
+            if(Connection.State == ConnectionState.Open)
             {
-                ServicioDatos.Close(); 
+                Connection.Close(); 
             }
         }
 

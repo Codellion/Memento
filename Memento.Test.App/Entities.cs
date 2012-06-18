@@ -114,23 +114,53 @@ namespace Memento.Test.App
             Producto prod2 = new Producto();
             prod2.Nombre = "Test2";
 
-            using(DataContext context = new DataContext())
+            //using(DataContext context = new DataContext())
+            //{
+            //    try
+            //    {
+            //        IPersistence<Producto> servProd = new Persistence<Producto>(context);
+
+            //        prod1 = servProd.InsertEntity(prod1);
+
+            //        prod2 = servProd.InsertEntity(prod2);
+
+            //        context.SaveChanges();    
+            //    }
+            //    catch(Exception ex)
+            //    {
+            //        MessageBox.Show(ex.Message);
+            //    }
+            //}
+
+
+            try
             {
-                try
-                {
-                    IPersistence<Producto> servProd = new Persistence<Producto>(context);
+                Linea newLinea = new Linea();
+                newLinea.Cantidad = 2;
+                newLinea.Descripcion = "Test de dependencias";
+                newLinea.Producto = new Reference<Producto>(1);
 
-                    prod1 = servProd.InsertEntity(prod1);
+                DetalleLinea detalleL = new DetalleLinea();
+                detalleL.Detalle = "Detalle de test de dependencias";
 
-                    prod2 = servProd.InsertEntity(prod2);
+                newLinea.DetalleLinea = new Dependence<DetalleLinea>(detalleL);
 
-                    context.SaveChanges();    
-                }
-                catch(Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
+                Factura newFactura = new Factura();
+                newFactura.Importe = 12.4f;
+                newFactura.Cliente = new Reference<Cliente>(1);
+
+                newFactura.Lineas = new Dependences<Linea>(newLinea);
+
+                IPersistence<Factura> servFactura = new Persistence<Factura>();
+                newFactura = servFactura.PersistEntity(newFactura);
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            
+
+            string dummy;
         }
     }
 }

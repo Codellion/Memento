@@ -17,7 +17,7 @@ namespace Memento.Persistence.Interfaces
         /// </summary>
         /// <param name="entity">T que se desea persistir</param>
         /// <returns>Entidad persistida</returns>
-        T InsertEntity(T entity);
+        T PersistEntity(T entity);
 
         /// <summary>
         /// Método que actualiza una Entidad

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Reflection;
 
 using Memento.Persistence.Commons;
@@ -41,9 +42,7 @@ namespace Memento.DataAccess.Utils
             Type tipoEntidad = entidad.GetType();
        
             //Establecemos las propiedades base que no se persisten
-            IList<string> transientProps = new List<string>();
-            transientProps.Add("Table");
-            transientProps.Add("References");
+            IList<string> transientProps = entidad.TransientProps;
             transientProps.Add(tipoEntidad.Name + "Id");
 
             IList<string> cols = new List<string>();
@@ -62,9 +61,14 @@ namespace Memento.DataAccess.Utils
                         if (entidad.References.Contains(persistProp.Name))
                         {
                             //Comprobamos que si es una entidad referenciada esta contenga el id
-                            nomCol = persistProp.PropertyType.Name + "Id";
-                            PropertyInfo pId = persistProp.PropertyType.GetProperty(nomCol);
-                            object valueAux = pId.GetValue(value, null);
+
+                            Type typRef = persistProp.PropertyType.GetGenericArguments()[0];
+                            nomCol += "Id";
+
+                            object refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null);
+
+                            PropertyInfo pId = typRef.GetProperty(nomCol);
+                            object valueAux = pId.GetValue(refValue, null);
 
                             if (valueAux == null)
                             {
@@ -73,8 +77,11 @@ namespace Memento.DataAccess.Utils
 
                             value = valueAux;
                         }
+
                         cols.Add(nomCol);
 
+
+                        //En función del tipo construimos la clausula del where
                         if (persistProp.PropertyType == typeof (string)
                             || persistProp.PropertyType == typeof (DateTime)
                             || persistProp.PropertyType == typeof (DateTime?))
@@ -88,11 +95,15 @@ namespace Memento.DataAccess.Utils
                             values.Add(String.Format(" {0} ",
                                                      ((bool) value) ? "1" : "0"));
                         }
-                        else
+                        else if (persistProp.PropertyType == typeof(float)
+                             || persistProp.PropertyType == typeof(float?))
                         {
                             values.Add(String.Format(" {0} ",
-                                                     value));
+                                                     value.ToString().Replace(",", ".")));
                         }
+                        else
+                        {
+                            values.Add(String.Format(" {0} ", value));}
 
                     }
                 }
@@ -124,9 +135,7 @@ namespace Memento.DataAccess.Utils
             }
 
             //Establecemos las propiedades base que no se persisten
-            IList<string> transientProps = new List<string>();
-            transientProps.Add("Table");
-            transientProps.Add("References");
+            IList<string> transientProps = entidad.TransientProps;
             transientProps.Add(tipoEntidad.Name + "Id");
             
             IList<string> cols = new List<string>();
@@ -144,10 +153,13 @@ namespace Memento.DataAccess.Utils
                         if (entidad.References.Contains(persistProp.Name))
                         {
                             //Comprobamos que si es una entidad referenciada esta contenga el id
-                            nomCol = persistProp.PropertyType.Name + "Id";
-                            PropertyInfo pId = persistProp.PropertyType.GetProperty(nomCol);
-                            object valueAux = pId.GetValue(value, null);
 
+                            Type typRef = persistProp.PropertyType.GetGenericArguments()[0];
+                            object refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null);
+
+                            PropertyInfo pId = typRef.GetProperty(nomCol);
+                            object valueAux = pId.GetValue(refValue, null);
+                            
                             if (valueAux == null)
                             {
                                 continue;
@@ -170,6 +182,13 @@ namespace Memento.DataAccess.Utils
                             cols.Add(String.Format(" {0} = {1} ",
                                                    nomCol,
                                                    ((bool) value) ? "1" : "0"));
+                        }
+                        else if (persistProp.PropertyType == typeof(float)
+                         || persistProp.PropertyType == typeof(float?))
+                        {
+                            cols.Add(String.Format(" {0} = {1} ",
+                                                    nomCol,
+                                                    value.ToString().Replace(",", ".")));
                         }
                         else
                         {
@@ -263,9 +282,7 @@ namespace Memento.DataAccess.Utils
             Type tipoEntidad = entidad.GetType();
       
             //Establecemos las propiedades base que no se persisten
-            IList<string> transientProps = new List<string>();
-            transientProps.Add("Table");
-            transientProps.Add("References");
+            IList<string> transientProps = entidad.TransientProps;
 
             IList<string> colProps = new List<string>();
             IList<string> tableProps = new List<string>();
@@ -335,6 +352,14 @@ namespace Memento.DataAccess.Utils
                                                         persistProp.Name,
                                                         ((bool) value) ? "1" : "0"));
                         }
+                        else if (persistProp.PropertyType == typeof(float)
+                                || persistProp.PropertyType == typeof(float?))
+                        {
+                            filtProps.Add(String.Format(" {0}.{1} = {2} ",
+                                                        "tableAux0",
+                                                        persistProp.Name,
+                                                        value.ToString().Replace(",", ".")));
+                        }
                         else
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
@@ -398,7 +423,7 @@ namespace Memento.DataAccess.Utils
                             //para satisfacer sus referencias internas
                             if (value is Entity)
                             {
-                                SetFilters(persistProp.Name, value, persistProp, aliasAux,
+                                SetFilters(persistProp.Name, value as Entity, persistProp, aliasAux,
                                            ref colProps, ref tableProps, ref filtProps);
                             }
                         }
@@ -408,7 +433,7 @@ namespace Memento.DataAccess.Utils
                             //para satisfacer sus referencias internas
                             if (aux is Entity)
                             {
-                                SetFilters(persistProp.Name, aux, persistProp, aliasAux,
+                                SetFilters(persistProp.Name, aux as Entity, persistProp, aliasAux,
                                            ref colProps, ref tableProps, ref filtProps);
                             }
                         }
@@ -431,7 +456,7 @@ namespace Memento.DataAccess.Utils
         /// <param name="colProps">Columnas</param>
         /// <param name="tableProps">Tablas</param>
         /// <param name="filtProps">Filtros</param>
-        public static void SetFilters(String nivel, Object entidad, PropertyInfo propEntidad, string actualAlias,
+        public static void SetFilters(String nivel, Entity entidad, PropertyInfo propEntidad, string actualAlias,
                                       ref IList<string> colProps, ref IList<string> tableProps, ref IList<string> filtProps)
         {
             Type tipoEntidad = propEntidad.PropertyType;
@@ -448,9 +473,7 @@ namespace Memento.DataAccess.Utils
 
             IList<string> referencias = (IList<string>) refsInfo.GetValue(entidad, null);
 
-            IList<string> transientProps = new List<string>();
-            transientProps.Add("Table");
-            transientProps.Add("References");
+            IList<string> transientProps = entidad.TransientProps;
 
             foreach (PropertyInfo persistProp in tipoEntidad.GetProperties())
             {
@@ -501,12 +524,20 @@ namespace Memento.DataAccess.Utils
                                                         persistProp.Name,
                                                         ((bool) value) ? "1" : "0"));
                         }
+                        else if (persistProp.PropertyType == typeof(float)
+                                || persistProp.PropertyType == typeof(float?))
+                        {
+                            filtProps.Add(String.Format(" {0}.{1} = {2} ",
+                                                        actualAlias,
+                                                        persistProp.Name,
+                                                        value.ToString().Replace(",", ".")));
+                        }
                         else
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                         actualAlias,
                                                         persistProp.Name,
-                                                        value));
+                                                        value.ToString().ToString(CultureInfo.InvariantCulture)));
                         }
                     }
                 }
@@ -563,7 +594,7 @@ namespace Memento.DataAccess.Utils
                             if (value is Entity)
                             {
                                 SetFilters(String.Format("{0}.{1}", nivel, persistProp.Name),
-                                           value, persistProp, aliasAux,
+                                           value as Entity, persistProp, aliasAux,
                                            ref colProps, ref tableProps, ref filtProps);
                             }
                         }
@@ -572,7 +603,7 @@ namespace Memento.DataAccess.Utils
                             if (aux is Entity)
                             {
                                 SetFilters(String.Format("{0}.{1}", nivel, persistProp.Name),
-                                           aux, persistProp, aliasAux,
+                                           aux as Entity, persistProp, aliasAux,
                                            ref colProps, ref tableProps, ref filtProps);
                             }
                         }
