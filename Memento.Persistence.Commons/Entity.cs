@@ -41,6 +41,8 @@ namespace Memento.Persistence.Commons
         /// </summary>
         private List<string> _transientProps;
 
+        private bool _isDirty = false;
+
         #endregion
 
         #region Propiedades
@@ -90,6 +92,12 @@ namespace Memento.Persistence.Commons
             set { _transientProps = value; }
         }
 
+        public bool IsDirty
+        {
+            get { return _isDirty; }
+            set { _isDirty = value; }
+        }
+
         #endregion
 
         /// <summary>
@@ -104,6 +112,7 @@ namespace Memento.Persistence.Commons
             TransientProps.Add("Table");
             TransientProps.Add("Dependences");
             TransientProps.Add("References");
+            TransientProps.Add("IsDirty");
 
             NameValueCollection section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
 
@@ -133,6 +142,15 @@ namespace Memento.Persistence.Commons
         public object GetEntityId()
         {
             return GetType().GetProperty((GetType().Name + "Id")).GetValue(this, null);
+        }
+
+        /// <summary>
+        /// Establece el identificador de la entidad
+        /// </summary>
+        /// <returns></returns>
+        public void SetEntityId(object id)
+        {
+            GetType().GetProperty((GetType().Name + "Id")).SetValue(this, id, null);
         }
 
         /// <summary>

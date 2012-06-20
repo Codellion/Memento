@@ -159,7 +159,36 @@ namespace Memento.Persistence
         /// <param name="entity">Entidad modificada</param>
         public void UpdateEntity(T entity)
         {
-            PersistenceService.UpdateEntity(entity);
+            if (entity.Dependences.Count > 0)
+            {
+                if (_context == null)
+                {
+                    using (DataContext dtContext = new DataContext())
+                    {
+                        try
+                        {
+                            IDataPersistence<T> pserServAux =
+                                DataFactoryProvider.GetProvider<T>(dtContext.Transaction);
+
+                            pserServAux.UpdateEntity(entity);
+
+                            ManageDependence(entity, entity.GetEntityId(), dtContext);
+                            dtContext.SaveChanges();
+                        }
+                        catch (Exception ex)
+                        {
+                            dtContext.Rollback();
+                            throw;
+                        }
+                    }
+                }
+                else
+                {
+                    PersistenceService.UpdateEntity(entity);
+
+                    ManageDependence(entity, entity.GetEntityId(), _context);
+                }
+            }
         }
 
         /// <summary>
@@ -484,13 +513,11 @@ namespace Memento.Persistence
 
                 if(pService != null)
                 {
-                    MethodInfo insertEntity = tPersServ.GetMethod("InsertEntity");
-
                     //Obtenemos el valor de la dependencia
                     object depValueImplict   = depValue.GetType().GetProperty("Value").GetValue(depValue, null);
 
                     //Comprobamos si es única o múltiple
-                    if(!depValueImplict.GetType().Name.StartsWith("List"))
+                    if(!depValueImplict.GetType().Name.StartsWith("BindingList"))
                     {
                         bool isDirty = (bool)depValue.GetType()
                             .GetProperty("IsDirty").GetValue(depValue, null);
@@ -523,7 +550,7 @@ namespace Memento.Persistence
 
                         refEntityProp.SetValue(depValueImplict, refEntity, null);
 
-                        depValueImplict = insertEntity.Invoke(pService, new object[] { depValueImplict });    
+                        //depValueImplict = insertEntity.Invoke(pService, new object[] { depValueImplict });    
                         depValue.GetType().GetProperty("Value").SetValue(depValue, depValueImplict, null);
                     }
                     else
@@ -540,49 +567,74 @@ namespace Memento.Persistence
                             return;   
                         }
 
-                        object enumerator = getEnumerator.Invoke(depValueImplict, null);
+                        ManageSubList("PersistEntity", "Inserts", depValue, entityId, pService);
+                        ManageSubList("UpdateEntity", "Updates", depValue, entityId, pService);
+                        ManageSubList("DeleteEntity", "Deletes", depValue, entityId, pService);
 
-                        MethodInfo moveNext = enumerator.GetType().GetMethod("MoveNext");
-
-                        while ((bool) moveNext.Invoke(enumerator, null))
-                        {
-                            PropertyInfo currentDepProp = enumerator.GetType().GetProperty("Current");
-                            
-                            if(currentDepProp != null)
-                            {
-                                object currentDepValue = currentDepProp.GetValue(enumerator, null);
-
-                                //Actualizamos la referencia de la entidad padre recien creada
-                                
-                                PropertyInfo refEntityProp = currentDepValue.GetType().GetProperty(tipoEntidad.Name);
-
-                                object refEntity = refEntityProp.GetValue(currentDepValue, null);
-
-                                if(refEntity == null)
-                                {
-                                    Type tReference = typeof (Reference<>);
-                                    tReference =
-                                        tReference.MakeGenericType(refEntityProp.PropertyType.GetGenericArguments());
-
-                                    refEntity = Activator.CreateInstance(tReference, 
-                                        new object[]{ Activator.CreateInstance<T>()});
-                                  
-                                }
-
-                                object refEntityValue = refEntity.GetType().GetProperty("Value").GetValue(refEntity, null);
-
-                                refEntityValue.GetType().GetProperty(tipoEntidad.Name + "Id")
-                                       .SetValue(refEntityValue, entityId, null);
-
-                                refEntityProp.SetValue(currentDepValue, refEntity, null);
-
-                                insertEntity.Invoke(pService, new object[] { currentDepValue });                                
-                            }
-                        }
+                        depValue.GetType().GetMethod("Initialize", BindingFlags.NonPublic | BindingFlags.Instance).
+                            Invoke(depValue, null);
                     }
 
                     //Seteamos el valor insertado
                     depProp.SetValue(entity, depValue, null);
+                }
+            }
+        }
+
+        private void ManageSubList(string persistMethod, string subList, object value, object entityId, object pService)
+        {
+            Type tipoEntidad = typeof (T);
+            Type tPersServ = pService.GetType();
+
+            MethodInfo persistEntity = tPersServ.GetMethod(persistMethod);
+
+            object depValueImplict = value.GetType().
+                GetProperty(subList, BindingFlags.NonPublic| BindingFlags.Instance).GetValue(value, null);
+
+            //Obtenemos el iterador de las dependencias e insertamos cada una de ellas si procede
+            MethodInfo getEnumerator = depValueImplict.GetType().GetMethod("GetEnumerator");
+            
+            object enumerator = getEnumerator.Invoke(depValueImplict, null);
+
+            MethodInfo moveNext = enumerator.GetType().GetMethod("MoveNext");
+
+            while ((bool)moveNext.Invoke(enumerator, null))
+            {
+                PropertyInfo currentDepProp = enumerator.GetType().GetProperty("Current");
+
+                if (currentDepProp != null)
+                {
+                    object currentDepValue = currentDepProp.GetValue(enumerator, null);
+
+                    //Actualizamos la referencia de la entidad padre recien creada
+
+                    PropertyInfo refEntityProp = currentDepValue.GetType().GetProperty(tipoEntidad.Name);
+
+                    object refEntity = refEntityProp.GetValue(currentDepValue, null);
+
+                    if (refEntity == null)
+                    {
+                        Type tReference = typeof(Reference<>);
+                        tReference =
+                            tReference.MakeGenericType(refEntityProp.PropertyType.GetGenericArguments());
+
+                        refEntity = Activator.CreateInstance(tReference,
+                            new object[] { Activator.CreateInstance<T>() });
+
+                    }
+
+                    object refEntityValue = refEntity.GetType().GetProperty("Value").GetValue(refEntity, null);
+
+                    PropertyInfo propId = refEntityValue.GetType().GetProperty(tipoEntidad.Name + "Id");
+                    Type nullType = Nullable.GetUnderlyingType(propId.PropertyType);
+
+                    object nullValue = nullType != null ? Convert.ChangeType(entityId, nullType) : entityId;
+
+                    propId.SetValue(refEntityValue, nullValue, null);
+                    
+                    refEntityProp.SetValue(currentDepValue, refEntity, null);
+
+                    persistEntity.Invoke(pService, new object[] { currentDepValue });
                 }
             }
         }

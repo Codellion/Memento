@@ -106,7 +106,7 @@ namespace Memento.Test.App
 
             IList<Linea> testLineas = pers.GetEntities(new Linea());
 
-            List<Linea> lineas = linea.Producto.Value.Lineas.Value;
+            BindingList<Linea> lineas = linea.Producto.Value.Lineas.Value;
 
             Producto prod1 = new Producto();
             prod1.Nombre = "Test1";
@@ -135,6 +135,15 @@ namespace Memento.Test.App
 
             try
             {
+                IPersistence<Factura> servFactura = new Persistence<Factura>();
+                Factura factura = servFactura.GetEntity(1);
+
+                factura.Lineas.Value.RemoveAt(1);
+
+                servFactura.PersistEntity(factura);
+                
+
+
                 Linea newLinea = new Linea();
                 newLinea.Cantidad = 2;
                 newLinea.Descripcion = "Test de dependencias";
@@ -151,7 +160,7 @@ namespace Memento.Test.App
 
                 newFactura.Lineas = new Dependences<Linea>(newLinea);
 
-                IPersistence<Factura> servFactura = new Persistence<Factura>();
+                
                 newFactura = servFactura.PersistEntity(newFactura);
             }
             catch (Exception ex)

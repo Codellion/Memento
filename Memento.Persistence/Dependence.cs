@@ -56,24 +56,27 @@ namespace Memento.Persistence
 
                         T aux = Activator.CreateInstance<T>();
 
-                        //Establecemos la relación entre ambas entidades
-                        PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
-
-                        object refAux = Activator.CreateInstance(prop.PropertyType);
-                        refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
-
-                        prop.SetValue(aux, refAux, null);
-
-                        //Realizamos la busqueda de los datos relacionados
-                        IList<T> res = servicioPers.GetEntities(aux) as IList<T>;
-
-                        if (res != null)
+                        if (!string.IsNullOrEmpty(ReferenceName))
                         {
-                            _value = res[0];
-                        }
-                        else
-                        {
-                            _value = Activator.CreateInstance<T>();
+                            //Establecemos la relación entre ambas entidades
+                            PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
+
+                            object refAux = Activator.CreateInstance(prop.PropertyType);
+                            refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
+
+                            prop.SetValue(aux, refAux, null);
+
+                            //Realizamos la busqueda de los datos relacionados
+                            IList<T> res = servicioPers.GetEntities(aux) as IList<T>;
+
+                            if (res != null)
+                            {
+                                _value = res[0];
+                            }
+                            else
+                            {
+                                _value = Activator.CreateInstance<T>();
+                            }
                         }
                     }
                 }

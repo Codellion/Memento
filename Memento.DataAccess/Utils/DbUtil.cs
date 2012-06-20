@@ -63,7 +63,7 @@ namespace Memento.DataAccess.Utils
                             //Comprobamos que si es una entidad referenciada esta contenga el id
 
                             Type typRef = persistProp.PropertyType.GetGenericArguments()[0];
-                            nomCol += "Id";
+                            nomCol = typRef.Name + "Id";
 
                             object refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null);
 
@@ -155,6 +155,8 @@ namespace Memento.DataAccess.Utils
                             //Comprobamos que si es una entidad referenciada esta contenga el id
 
                             Type typRef = persistProp.PropertyType.GetGenericArguments()[0];
+                            nomCol = typRef.Name + "Id";
+
                             object refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null);
 
                             PropertyInfo pId = typRef.GetProperty(nomCol);
@@ -212,19 +214,31 @@ namespace Memento.DataAccess.Utils
             Type tipoT = typeof (T);
             Type tId = tipoT.GetProperty(tipoT.Name + "Id").PropertyType;
 
+            object id = null;
+
+            if(entidadId is Entity)
+            {
+                id = (entidadId as Entity).GetEntityId();
+            }
+            else
+            {
+                id = entidadId;
+            }
+                
+
             string where;
 
             if (tId == typeof (string))
             {
                 where = String.Format(" {0}Id = '{1}' ",
                                       tipoT.Name,
-                                      entidadId);
+                                      id);
             }
             else
             {
                 where = String.Format(" {0}Id = {1} ",
                                       tipoT.Name,
-                                      entidadId);
+                                      id);
             }
 
             PropertyInfo pTableName = tipoT.GetProperty("Table");

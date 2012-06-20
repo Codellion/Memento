@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Reflection;
+
 using Memento.Persistence.Commons;
 using Memento.Persistence.Interfaces;
 
@@ -19,7 +21,7 @@ namespace Memento.Persistence
         /// Atributo privado que sirve para almacenar los valores
         /// de las dependencias
         /// </summary>
-        private List<T> _value;
+        private BindingList<T> _value;
 
         /// <summary>
         /// Nombre de la propiedad de la clase sobre la que tenemos
@@ -37,6 +39,11 @@ namespace Memento.Persistence
         /// </summary>
         private bool _isDirty;
 
+        private IDictionary<int, object> _inserts;
+        private IDictionary<int, object> _updates;
+        private IDictionary<int, object> _deletes;
+        private List<T> _backup;
+
         #endregion
 
         #region Propiedades
@@ -44,7 +51,7 @@ namespace Memento.Persistence
         /// <summary>
         /// Propiedad que permite la carga perezosa de los valores de las dependecias
         /// </summary>
-        public List<T> Value
+        public BindingList<T> Value
         {
             get
             {
@@ -56,18 +63,32 @@ namespace Memento.Persistence
 
                         T aux = Activator.CreateInstance<T>();
 
-                        //Establecemos la relación entre ambas entidades
-                        PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
-                        
-                        object refAux = Activator.CreateInstance(prop.PropertyType);
-                        refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
+                        if (!string.IsNullOrEmpty(ReferenceName))
+                        {
+                            //Establecemos la relación entre ambas entidades
+                            PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
 
-                        prop.SetValue(aux, refAux, null);
 
-                        //Realizamos la busqueda de los datos relacionados
-                        List<T> res = servicioPers.GetEntities(aux) as List<T>;
 
-                        _value = res;
+                            object refAux = Activator.CreateInstance(prop.PropertyType);
+                            refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
+
+                            prop.SetValue(aux, refAux, null);
+
+                            //Realizamos la busqueda de los datos relacionados
+                            IList<T> res = servicioPers.GetEntities(aux);
+
+                            if (res != null)
+                            {
+                                _backup = new List<T>(res);
+
+                                _value = new BindingList<T>(res);
+
+                                Initialize();
+                            }
+
+                            IsDirty = false;
+                        }
                     }
                 }
                 catch (Exception)
@@ -106,21 +127,73 @@ namespace Memento.Persistence
         /// </summary>
         public bool IsDirty
         {
-            get { return _isDirty; }
+            get { return _isDirty || _inserts.Count > 0 || _updates.Count > 0 || _deletes.Count > 0; }
             set { _isDirty = value; }
+        }
+
+
+        protected IList<T> Inserts
+        { 
+            get
+            {
+                IList<T> res = new List<T>();
+
+                foreach (int index in _inserts.Keys)
+                {
+                    res.Add(Value[index]);
+                }
+
+                return res;
+            }
+        }
+
+        protected IList<T> Updates
+        {
+            get
+            {
+                IList<T> res = new List<T>();
+
+                foreach (int index in _updates.Keys)
+                {
+                    res.Add(Value[index]);
+                }
+
+                return res;
+            }
+        }
+
+        protected IList<T> Deletes
+        {
+            get
+            {
+                IList<T> res = new List<T>();
+
+                foreach (int index in _deletes.Keys)
+                {
+                    T aux = Activator.CreateInstance<T>();
+
+                    aux.SetEntityId(_deletes[index]);
+
+                    res.Add(aux);
+                }
+
+                return res;
+            }
         }
 
         #endregion
 
         #region Constructores
-               
+        
         /// <summary>
         /// Constructor donde se define la propiedad referenciada en la clase
         /// dependiente
         /// </summary>
         public Dependences()
         {
-            Value = new List<T>();
+            Value = new BindingList<T>();
+
+            Initialize();
         }
 
         /// <summary>
@@ -129,16 +202,27 @@ namespace Memento.Persistence
         /// </summary>
         public Dependences(T entity)
         {
-            Value = new List<T> {entity};
+            Value = new BindingList<T>();
+
+            Initialize();
+
+            Value.Add(entity);
         }
 
         /// <summary>
         /// Constructor donde se define la propiedad referenciada en la clase
         /// dependiente
         /// </summary>
-        public Dependences(List<T> entities)
+        public Dependences(IEnumerable<T> entities)
         {
-            Value = entities;
+            Value = new BindingList<T>();
+
+            Initialize();
+
+            foreach (T entity in entities)
+            {
+                Value.Add(entity);    
+            }
         }
 
         /// <summary>
@@ -149,11 +233,74 @@ namespace Memento.Persistence
         /// <param name="entidad">Entidad que contiene la dependencia</param>
         public Dependences(string refName, Entity entidad)
         {
+            Initialize();
+
             IsDirty = false;
             _referenceName = refName;
             _entityRef = entidad;
         }
 
         #endregion
+        
+        protected void Initialize()
+        {
+            if(Value != null)
+            {
+                Value.ListChanged += ValueOnListChanged; 
+            }
+
+            _inserts = new Dictionary<int, object>();
+            _updates = new Dictionary<int, object>();
+            _deletes = new Dictionary<int, object>();
+        }
+
+        private void ValueOnListChanged(object sender, ListChangedEventArgs listChangedEventArgs)
+        {
+            int newIndex = listChangedEventArgs.NewIndex;
+
+            switch (listChangedEventArgs.ListChangedType)
+            {
+                case ListChangedType.ItemAdded:
+
+                    if(Value[newIndex].GetEntityId() == null)
+                    {
+                        _inserts.Add(newIndex, -1);
+                    }
+                    else if(Value[newIndex].IsDirty)
+                    {
+                        _updates.Add(newIndex, Value[newIndex].GetEntityId());
+                    }
+                    
+                    break;
+                case ListChangedType.ItemChanged:
+
+                    if (Value[newIndex].GetEntityId() != null
+                        && !_updates.ContainsKey(newIndex))
+                    {
+                        _updates.Add(newIndex, Value[newIndex].GetEntityId());   
+                    }
+
+                    break;
+                case ListChangedType.ItemDeleted:
+
+                    if (_backup[newIndex].GetEntityId() != null)
+                    {
+                        if(_updates.ContainsKey(newIndex))
+                        {
+                            _updates.Remove(newIndex);
+                        }
+
+                        _deletes.Add(_deletes.Count + 1, _backup[newIndex].GetEntityId());
+                    }
+                    else
+                    {
+                        _inserts.Remove(newIndex);
+                    }
+
+                    _backup.RemoveAt(newIndex);
+
+                    break;
+            }
+        }
     }
 }
