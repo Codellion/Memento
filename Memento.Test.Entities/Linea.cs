@@ -5,9 +5,21 @@ namespace Memento.Test.Entities
 {
     public class Linea : Entity
     {
-        public long? LineaId { set; get; }
-        public string Descripcion { set; get; }
-        public int? Cantidad { set; get; }
+        public long? LineaId
+        {
+            set { Set("LineaId", value); }
+            get { return Get<long?>("LineaId"); }
+        }
+        public string Descripcion
+        {
+            set { Set("Descripcion", value); }
+            get { return Get<string>("Descripcion"); }
+        }
+        public int? Cantidad
+        {
+            set { Set("Cantidad", value); }
+            get { return Get<int?>("Cantidad"); }
+        }
 
         private Dependence<DetalleLinea> _detalleLinea;
         public Dependence<DetalleLinea> DetalleLinea

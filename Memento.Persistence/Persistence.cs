@@ -189,6 +189,10 @@ namespace Memento.Persistence
                     ManageDependence(entity, entity.GetEntityId(), _context);
                 }
             }
+            else
+            {
+                PersistenceService.UpdateEntity(entity);
+            }
         }
 
         /// <summary>
@@ -198,7 +202,54 @@ namespace Memento.Persistence
         /// <param name="entitydId">Identificador de la entidad que se quiere eliminar</param>
         public void DeleteEntity(object entitydId)
         {
-            PersistenceService.DeleteEntity(entitydId);
+            T entity;
+            
+            if(entitydId is T)
+            {
+                entity = (T)entitydId;
+            }
+            else
+            {
+                entity = GetEntity(entitydId);
+            }
+                
+            
+            if (entity != null && entity.Dependences.Count > 0)
+            {
+                if (_context == null)
+                {
+                    using (DataContext dtContext = new DataContext())
+                    {
+                        try
+                        {
+                            IDataPersistence<T> pserServAux =
+                                DataFactoryProvider.GetProvider<T>(dtContext.Transaction);
+
+                            pserServAux.DeleteEntity(entitydId);
+                            entity.Activo = false;
+
+                            ManageDependence(entity, entity.GetEntityId(), dtContext);
+                            dtContext.SaveChanges();
+                        }
+                        catch (Exception ex)
+                        {
+                            dtContext.Rollback();
+                            throw;
+                        }
+                    }
+                }
+                else
+                {
+                    PersistenceService.DeleteEntity(entitydId);
+                    entity.Activo = false;
+
+                    ManageDependence(entity, entity.GetEntityId(), _context);
+                }
+            }
+            else
+            {
+                PersistenceService.DeleteEntity(entitydId);
+            }
         }
 
         /// <summary>
@@ -523,7 +574,7 @@ namespace Memento.Persistence
                             .GetProperty("IsDirty").GetValue(depValue, null);
 
                         //Si la dependencia no ha sido modificada no hacemos nada
-                        if (!isDirty)
+                        if (!isDirty && entity.Activo)
                         {
                             return;
                         }
@@ -550,8 +601,44 @@ namespace Memento.Persistence
 
                         refEntityProp.SetValue(depValueImplict, refEntity, null);
 
-                        //depValueImplict = insertEntity.Invoke(pService, new object[] { depValueImplict });    
-                        depValue.GetType().GetProperty("Value").SetValue(depValue, depValueImplict, null);
+                        MethodInfo operationEntity = null;
+
+                        StatusDependence statusEnt = (StatusDependence)
+                            depValue.GetType().GetProperty("Status").GetValue(depValue, null);
+
+                        switch (statusEnt)
+                        {
+                                case StatusDependence.Created:
+                                    operationEntity = tPersServ.GetMethod("PersistEntity");
+                                    break;
+                                case StatusDependence.Modified:
+                                    operationEntity = tPersServ.GetMethod("UpdateEntity");
+                                    break;
+                                case StatusDependence.Deleted: 
+                                    operationEntity = tPersServ.GetMethod("DeleteEntity");
+                                    break;
+                        }
+                        
+                        if(!entity.Activo)
+                        {
+                            operationEntity = tPersServ.GetMethod("DeleteEntity");
+                        }
+
+                        if(operationEntity != null)
+                        {
+                            object depValueImplAux = operationEntity.Invoke(pService, new object[] { depValueImplict });
+
+                            if (depValueImplAux != null)
+                            {
+                                depValueImplict = depValueImplAux;
+                            }
+
+                            depValueImplict.GetType().GetProperty("IsDirty").SetValue(depValueImplict, false, null);
+                            
+                            depValue.GetType().GetProperty("Value").SetValue(depValue, depValueImplict, null);
+                            depValue.GetType().GetProperty("Status").SetValue(depValue, StatusDependence.Synchronized, null);
+                            depValue.GetType().GetProperty("IsDirty").SetValue(depValue, false, null);
+                        }
                     }
                     else
                     {

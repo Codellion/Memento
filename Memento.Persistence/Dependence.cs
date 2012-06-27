@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Reflection;
 using Memento.Persistence.Commons;
 using Memento.Persistence.Interfaces;
@@ -22,6 +23,12 @@ namespace Memento.Persistence
         private T _value;
 
         /// <summary>
+        /// Atributo privado que sirve para almacenar los valores
+        /// de la dependencia de forma que se pueda controlar su "estado"
+        /// </summary>
+        private BindingList<T> _valueAux;
+
+        /// <summary>
         /// Nombre de la propiedad de la clase sobre la que tenemos
         /// la dependencia
         /// </summary>
@@ -31,6 +38,11 @@ namespace Memento.Persistence
         /// Entidad que contiene la dependencia
         /// </summary>
         private Entity _entityRef;
+
+        /// <summary>
+        /// Estado de la dependencia
+        /// </summary>
+        private StatusDependence _status = StatusDependence.Unknown;
 
         /// <summary>
         /// Indica si la lista de dependencias fue creado por el usuario y no traida desde la BBDD
@@ -71,11 +83,16 @@ namespace Memento.Persistence
 
                             if (res != null)
                             {
-                                _value = res[0];
+                                _valueAux = new BindingList<T>(res);
+                                _value = _valueAux[0];
+
+                                Status = StatusDependence.Synchronized;
+                                IsDirty = false;
                             }
                             else
                             {
                                 _value = Activator.CreateInstance<T>();
+                                Status = StatusDependence.Unknown;
                             }
                         }
                     }
@@ -84,14 +101,25 @@ namespace Memento.Persistence
                 {
                     //TODO Registrar error
                 }
-
+                
                 return _value;
             }
 
             set
             {
-                IsDirty = true; 
-                _value = value; 
+                IsDirty = true;
+
+                _valueAux = new BindingList<T> {value};
+                _value = _valueAux[0]; 
+
+                if(value.GetEntityId() != null)
+                {
+                    Status = value.IsDirty ? StatusDependence.Modified : StatusDependence.Synchronized;
+                }
+                else
+                {
+                    Status = StatusDependence.Created;
+                }
             }
         }
 
@@ -123,6 +151,15 @@ namespace Memento.Persistence
             set { _isDirty = value; }
         }
 
+        /// <summary>
+        /// Estado de la dependencia
+        /// </summary>
+        public StatusDependence Status
+        {
+            get { return _status; }
+            set { _status = value; }
+        }
+
         #endregion
 
         #region Constructores
@@ -134,6 +171,9 @@ namespace Memento.Persistence
         public Dependence()
         {
             IsDirty = true;
+            Status = StatusDependence.Unknown;
+
+            Initialize();
         }
 
         /// <summary>
@@ -142,8 +182,9 @@ namespace Memento.Persistence
         /// </summary>
         public Dependence(T entity)
         {
-            IsDirty = true;
             Value = entity;
+
+            Initialize();
         }
 
         /// <summary>
@@ -155,10 +196,44 @@ namespace Memento.Persistence
         public Dependence(string refName, Entity entidad)
         {
             IsDirty = false;
+            Status = StatusDependence.Unknown;
+
             _referenceName = refName;
             _entityRef = entidad;
+
+            Initialize();
         }
 
         #endregion
+
+        protected void Initialize()
+        {
+            if (Value != null)
+            {
+                _valueAux.ListChanged += ValueOnListChanged;
+            }
+        }
+
+        private void ValueOnListChanged(object sender, ListChangedEventArgs listChangedEventArgs)
+        {
+            IsDirty = true;
+
+            switch (listChangedEventArgs.ListChangedType)
+            {
+                case ListChangedType.ItemChanged:
+
+                    if (_value.GetEntityId() != null)
+                    {
+                        Status = StatusDependence.Modified;    
+                    }
+
+                    break;
+            }
+        }
+
+        public void Delete()
+        {
+            Status = StatusDependence.Deleted;
+        }
     }
 }

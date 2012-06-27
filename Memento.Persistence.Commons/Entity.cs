@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Configuration;
 using System.Reflection;
 
@@ -11,7 +12,7 @@ namespace Memento.Persistence.Commons
     /// desean persistir mediante el módulo de persistencia
     /// </summary>
     [Serializable]
-    public abstract class Entity
+    public abstract class Entity : INotifyPropertyChanged
     {
 
         #region Atributos
@@ -42,6 +43,8 @@ namespace Memento.Persistence.Commons
         private List<string> _transientProps;
 
         private bool _isDirty = false;
+
+        private IDictionary<string, object> _propValues;
 
         #endregion
 
@@ -113,6 +116,8 @@ namespace Memento.Persistence.Commons
             TransientProps.Add("Dependences");
             TransientProps.Add("References");
             TransientProps.Add("IsDirty");
+            TransientProps.Add("PropertyChanged");
+            TransientProps.Add("_propValues");
 
             NameValueCollection section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
 
@@ -133,6 +138,8 @@ namespace Memento.Persistence.Commons
                     Dependences.Add(prop.Name);
                 }
             }
+
+            _propValues = new Dictionary<string, object>(GetType().GetProperties().Length);
         }
 
         /// <summary>
@@ -161,5 +168,33 @@ namespace Memento.Persistence.Commons
         {
             return GetType().Name + "Id";
         }
+
+        #region Métodos para el control de las propiedades
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void Set(String info, object value)
+        {
+            object prop = _propValues.ContainsKey(info) ? _propValues[info] : null;
+
+            if (prop != value)
+            {
+                _propValues[info] = value;
+
+                if (PropertyChanged != null)
+                {
+                    PropertyChanged(this, new PropertyChangedEventArgs(info));
+                }    
+            }
+        }
+
+        protected T Get<T>(String info)
+        {
+            object prop = _propValues.ContainsKey(info) ? _propValues[info] : null;
+
+            return (T)prop;
+        }
+
+        #endregion
     }
 }

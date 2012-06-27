@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Memento.Persistence.Commons;
 
 namespace Memento.Persistence
@@ -50,8 +51,14 @@ namespace Memento.Persistence
         {
             Value = Activator.CreateInstance<T>();
 
-            Value.GetType().GetProperty(typeof(T).Name + "Id")
-                .SetValue(Value, valueId, null);
+            Type tipoEntidad = typeof(T);
+
+            PropertyInfo propId = tipoEntidad.GetProperty(tipoEntidad.Name + "Id");
+            Type nullType = Nullable.GetUnderlyingType(propId.PropertyType);
+
+            object nullValue = nullType != null ? Convert.ChangeType(valueId, nullType) : valueId;
+
+            propId.SetValue(Value, nullValue, null);
         }
 
         /// <summary>

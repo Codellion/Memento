@@ -59,6 +59,11 @@ namespace Memento.Test.App
                     IPersistence<Factura> servPers = new Persistence<Factura>();
                     dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
                 }
+                else if (cmbEntidades.SelectedItem.Equals("DetalleLinea"))
+                {
+                    IPersistence<DetalleLinea> servPers = new Persistence<DetalleLinea>();
+                    dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
+                }
             }
             else
             {
@@ -136,11 +141,11 @@ namespace Memento.Test.App
             try
             {
                 IPersistence<Factura> servFactura = new Persistence<Factura>();
-                Factura factura = servFactura.GetEntity(1);
+                //Factura factura = servFactura.GetEntity(1);
 
-                factura.Lineas.Value.RemoveAt(1);
+                //factura.Lineas.Value.RemoveAt(1);
 
-                servFactura.PersistEntity(factura);
+                //servFactura.PersistEntity(factura);
                 
 
 
@@ -148,12 +153,24 @@ namespace Memento.Test.App
                 newLinea.Cantidad = 2;
                 newLinea.Descripcion = "Test de dependencias";
                 newLinea.Producto = new Reference<Producto>(1);
+                newLinea.Factura = new Reference<Factura>(1);
 
                 DetalleLinea detalleL = new DetalleLinea();
                 detalleL.Detalle = "Detalle de test de dependencias";
 
                 newLinea.DetalleLinea = new Dependence<DetalleLinea>(detalleL);
 
+                newLinea.DetalleLinea.Value.Detalle = "test";
+
+                IPersistence<Linea> servLinea = new Persistence<Linea>();
+                servLinea.PersistEntity(newLinea);
+
+
+                newLinea.DetalleLinea.Value.Detalle = "nuevo test";
+                servLinea.PersistEntity(newLinea);
+
+                servLinea.DeleteEntity(newLinea);
+                
                 Factura newFactura = new Factura();
                 newFactura.Importe = 12.4f;
                 newFactura.Cliente = new Reference<Cliente>(1);
