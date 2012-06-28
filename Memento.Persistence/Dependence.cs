@@ -197,14 +197,13 @@ namespace Memento.Persistence
 
         #endregion
 
-        protected void Initialize()
-        {
-            if (Value != null)
-            {
-                Value.PropertyChanged += ValueOnPropertyChanged;
-            }
-        }
+        #region Métodos Privados
 
+        /// <summary>
+        /// Método que maneja el cambio de propiedades de la dependencia
+        /// </summary>
+        /// <param name="sender">Objeto que genero el evento</param>
+        /// <param name="propertyChangedEventArgs">Propiedades del evento</param>
         private void ValueOnPropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
         {
             IsDirty = true;
@@ -215,9 +214,31 @@ namespace Memento.Persistence
             }
         }
 
+        #endregion
+
+        #region Métodos públicos
+
+        /// <summary>
+        /// Método que inicializa los parámetros base de la dependencia
+        /// </summary>
+        protected void Initialize()
+        {
+            if (Value != null)
+            {
+                Value.PropertyChanged += ValueOnPropertyChanged;
+            }
+        }
+
+        /// <summary>
+        /// Elimina la dependencia
+        /// </summary>
         public void Delete()
         {
+            IsDirty = true;
+
             Status = StatusDependence.Deleted;
         }
+
+        #endregion
     }
 }

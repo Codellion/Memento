@@ -39,9 +39,24 @@ namespace Memento.Persistence
         /// </summary>
         private bool _isDirty;
 
+        /// <summary>
+        /// Lista de dependencias a crear
+        /// </summary>
         private IDictionary<int, object> _inserts;
+        
+        /// <summary>
+        /// Lista de dependencias a actualizar
+        /// </summary>
         private IDictionary<int, object> _updates;
+
+        /// <summary>
+        /// Lista de dependencias a eliminar
+        /// </summary>
         private IDictionary<int, object> _deletes;
+
+        /// <summary>
+        /// Lista original de las dependencias
+        /// </summary>
         private List<T> _backup;
 
         #endregion
@@ -129,7 +144,9 @@ namespace Memento.Persistence
             set { _isDirty = value; }
         }
 
-
+        /// <summary>
+        /// Lista de dependencias a crear
+        /// </summary>
         protected IList<T> Inserts
         { 
             get
@@ -145,6 +162,9 @@ namespace Memento.Persistence
             }
         }
 
+        /// <summary>
+        /// Lista de dependencias a actualizar
+        /// </summary>
         protected IList<T> Updates
         {
             get
@@ -160,6 +180,9 @@ namespace Memento.Persistence
             }
         }
 
+        /// <summary>
+        /// Lista de dependencias a eliminar
+        /// </summary>
         protected IList<T> Deletes
         {
             get
@@ -240,6 +263,72 @@ namespace Memento.Persistence
 
         #endregion
 
+        #region Métodos Privados
+
+        /// <summary>
+        /// Método que gestiona los cambios sobre la lista de dependencias
+        /// </summary>
+        /// <param name="sender">Objeto que genera el evento</param>
+        /// <param name="listChangedEventArgs">Argumentos del cambio en la lista</param>
+        private void ValueOnListChanged(object sender, ListChangedEventArgs listChangedEventArgs)
+        {
+            int newIndex = listChangedEventArgs.NewIndex;
+
+            IsDirty = true;
+
+            switch (listChangedEventArgs.ListChangedType)
+            {
+                case ListChangedType.ItemAdded:
+
+                    if (Value[newIndex].GetEntityId() == null)
+                    {
+                        _inserts.Add(newIndex, -1);
+                    }
+                    else if (Value[newIndex].IsDirty)
+                    {
+                        _updates.Add(newIndex, Value[newIndex].GetEntityId());
+                    }
+
+                    break;
+                case ListChangedType.ItemChanged:
+
+                    if (Value[newIndex].GetEntityId() != null
+                        && !_updates.ContainsKey(newIndex))
+                    {
+                        _updates.Add(newIndex, Value[newIndex].GetEntityId());
+                    }
+
+                    break;
+                case ListChangedType.ItemDeleted:
+
+                    if (_backup[newIndex].GetEntityId() != null)
+                    {
+                        if (_updates.ContainsKey(newIndex))
+                        {
+                            _updates.Remove(newIndex);
+                        }
+
+                        _deletes.Add(_deletes.Count + 1, _backup[newIndex].GetEntityId());
+                    }
+                    else
+                    {
+                        _inserts.Remove(newIndex);
+                    }
+
+                    _backup.RemoveAt(newIndex);
+
+                    break;
+            }
+        }
+
+        #endregion
+
+        #region Métodos Públicos
+
+        /// <summary>
+        /// Crea una nueva dependencia relacionada con la entidad a la que pertenece esta lista
+        /// </summary>
+        /// <returns></returns>
         public T CreateDependence()
         {
             T aux = Activator.CreateInstance<T>();
@@ -258,6 +347,9 @@ namespace Memento.Persistence
             return aux;
         }
         
+        /// <summary>
+        /// Inicializa los parámetros básicos de las dependencias
+        /// </summary>
         protected void Initialize()
         {
             if(Value != null)
@@ -270,55 +362,8 @@ namespace Memento.Persistence
             _deletes = new Dictionary<int, object>();
         }
 
-        private void ValueOnListChanged(object sender, ListChangedEventArgs listChangedEventArgs)
-        {
-            int newIndex = listChangedEventArgs.NewIndex;
+        #endregion
 
-            IsDirty = true;
-
-            switch (listChangedEventArgs.ListChangedType)
-            {
-                case ListChangedType.ItemAdded:
-
-                    if(Value[newIndex].GetEntityId() == null)
-                    {
-                        _inserts.Add(newIndex, -1);
-                    }
-                    else if(Value[newIndex].IsDirty)
-                    {
-                        _updates.Add(newIndex, Value[newIndex].GetEntityId());
-                    }
-                    
-                    break;
-                case ListChangedType.ItemChanged:
-
-                    if (Value[newIndex].GetEntityId() != null
-                        && !_updates.ContainsKey(newIndex))
-                    {
-                        _updates.Add(newIndex, Value[newIndex].GetEntityId());   
-                    }
-
-                    break;
-                case ListChangedType.ItemDeleted:
-
-                    if (_backup[newIndex].GetEntityId() != null)
-                    {
-                        if(_updates.ContainsKey(newIndex))
-                        {
-                            _updates.Remove(newIndex);
-                        }
-
-                        _deletes.Add(_deletes.Count + 1, _backup[newIndex].GetEntityId());
-                    }
-                    else
-                    {
-                        _inserts.Remove(newIndex);
-                    }
-
-                    _backup.RemoveAt(newIndex);
-
-                    break;
-            }
-        }
+       
     }
 }

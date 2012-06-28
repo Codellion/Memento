@@ -42,8 +42,14 @@ namespace Memento.Persistence.Commons
         /// </summary>
         private List<string> _transientProps;
 
+        /// <summary>
+        /// Indica si la entidad esta sincronizada con la BBDD
+        /// </summary>
         private bool _isDirty = false;
 
+        /// <summary>
+        /// Propiedades privadas de la entidad
+        /// </summary>
         private IDictionary<string, object> _propValues;
 
         #endregion
@@ -95,6 +101,9 @@ namespace Memento.Persistence.Commons
             set { _transientProps = value; }
         }
 
+        /// <summary>
+        /// Indica si la entidad esta sincronizada con la BBDD
+        /// </summary>
         public bool IsDirty
         {
             get { return (_isDirty || GetEntityId() == null); }
@@ -102,6 +111,8 @@ namespace Memento.Persistence.Commons
         }
 
         #endregion
+
+        #region Constructores
 
         /// <summary>
         /// Constructor de la clase donde se invoca el método de configurar entidad
@@ -142,6 +153,10 @@ namespace Memento.Persistence.Commons
             _propValues = new Dictionary<string, object>(GetType().GetProperties().Length);
         }
 
+        #endregion
+
+        #region Métodos Públicos
+
         /// <summary>
         /// Devuelve el identificador de la entidad
         /// </summary>
@@ -169,10 +184,20 @@ namespace Memento.Persistence.Commons
             return GetType().Name + "Id";
         }
 
+        #endregion
+
         #region Métodos para el control de las propiedades
 
+        /// <summary>
+        /// Evento que se lanza cuando se modifica una propiedad de la entidad
+        /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
+        /// <summary>
+        /// Método que establece las propiedades privadas de una entidad
+        /// </summary>
+        /// <param name="info">Nombre de la propiedad</param>
+        /// <param name="value">Valor</param>
         protected void Set(String info, object value)
         {
             object prop = _propValues.ContainsKey(info) ? _propValues[info] : null;
@@ -189,6 +214,12 @@ namespace Memento.Persistence.Commons
             }
         }
 
+        /// <summary>
+        /// Método que devuelve el valor de una propiedad privada de la entidad
+        /// </summary>
+        /// <typeparam name="T">Tipo de dato de la propiedad</typeparam>
+        /// <param name="info">Nombre de la propiedad</param>
+        /// <returns></returns>
         protected T Get<T>(String info)
         {
             object prop = _propValues.ContainsKey(info) ? _propValues[info] : null;

@@ -475,6 +475,12 @@ namespace Memento.Persistence
             }
         }
 
+        /// <summary>
+        /// Parsea un valor boolean que puede ser nulo
+        /// </summary>
+        /// <param name="prop">Propiedad que queremos establecer</param>
+        /// <param name="valor">Booleano que queremos establecer</param>
+        /// <returns>Booleano nullable</returns>
         private static object TryParserNullBoolean(PropertyInfo prop, object valor)
         {
             if (prop.PropertyType == typeof(bool)
@@ -495,6 +501,12 @@ namespace Memento.Persistence
             return valor;
         }
 
+        /// <summary>
+        /// Devuelve un valor que puede ser nulo
+        /// </summary>
+        /// <param name="prop">Propiedad del valor</param>
+        /// <param name="valor">Valor</param>
+        /// <returns>Valor nullable</returns>
         private static object GetNullableValueFromProp(PropertyInfo prop, object valor)
         {
             //Establecemos el valor
@@ -504,6 +516,11 @@ namespace Memento.Persistence
             return nullValue;
         }
 
+        /// <summary>
+        /// Realiza una insercción del resgistro en BBDD y establece su identificador
+        /// </summary>
+        /// <param name="entity">Entidad a insertar</param>
+        /// <returns>Entidad insertada</returns>
         private T DoInsertEntity(T entity)
         {
             object id = PersistenceService.InsertEntity(entity);
@@ -520,6 +537,12 @@ namespace Memento.Persistence
             return entity;
         }
 
+        /// <summary>
+        /// Gestiona la persistencia de las entidades dependientes N-M con la entidad que se esta persistiendo
+        /// </summary>
+        /// <param name="father">Entidad a la que pertenece la dependencia</param>
+        /// <param name="relation">Relación de la dependencia</param>
+        /// <param name="dtContext">Contexto de persistencia</param>
         private void ManageRelationsNmEntity(Entity father, NmEntity relation, DataContext dtContext = null)
         {
             foreach (string propRefName in relation.References)
@@ -569,6 +592,12 @@ namespace Memento.Persistence
             }
         }
 
+        /// <summary>
+        /// Devuelve un servición de persistencia para un tipo de entidad
+        /// </summary>
+        /// <param name="type">Tipo de entidad</param>
+        /// <param name="dtContext">Contexto de persistencia</param>
+        /// <returns>Servicio de persistencia</returns>
         private object GetServicePersistence(Type type, DataContext dtContext = null)
         {
             //Obtenemos el servicio de persistencia oportuno para el tipo de la dependencia
@@ -604,7 +633,7 @@ namespace Memento.Persistence
         /// </summary>
         /// <param name="entity">Entidad que contiene las dependencias</param>
         /// /// <param name="entityId">Identificador de la entidad</param>
-        /// /// <param name="dtContext">Contexto de ejecución</param>
+        /// /// <param name="dtContext">Contexto de persistencia</param>
         private void ManageDependence(T entity, object entityId, DataContext dtContext)
         {
             Type tipoEntidad = typeof (T);
@@ -729,6 +758,15 @@ namespace Memento.Persistence
             }
         }
 
+        /// <summary>
+        /// Gestiona la persistencia de las entidades dependientes 1-N de una entidad
+        /// </summary>
+        /// <param name="persistMethod">Operación de persistencia</param>
+        /// <param name="subList">Tipo de lista (Inserts, Updates, Deletes...)</param>
+        /// <param name="value">Lista</param>
+        /// <param name="entity">Entidad a la que pertenecen las dependencias</param>
+        /// <param name="pService">Servicio de persistencia</param>
+        /// <param name="dtContext">Contexto de persistencia</param>
         private void ManageSubList(string persistMethod, string subList, object value, Entity entity, object pService, DataContext dtContext = null)
         {
             object entityId = entity.GetEntityId();
