@@ -37,6 +37,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NmEntity.cs" />
     <Compile Include="EaterEntity.cs" />
     <Compile Include="Entity.cs" />
     <Compile Include="LazyEntity.cs" />

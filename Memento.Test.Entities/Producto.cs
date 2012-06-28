@@ -5,10 +5,10 @@ namespace Memento.Test.Entities
 {
     public class Producto : Entity
     {
-        public int? ProductoId
+        public long? ProductoId
         {
             set { Set("ProductoId", value); }
-            get { return Get<int?>("ProductoId"); }
+            get { return Get<long?>("ProductoId"); }
         }
         public string Nombre
         {
@@ -21,6 +21,13 @@ namespace Memento.Test.Entities
         {
             get { return _lineas ?? (_lineas = new Dependences<Linea>("Producto", this)); }
             set { _lineas = value; }
+        }
+
+        private Dependences<ProductoProveedor> _proveedores;
+        public Dependences<ProductoProveedor> Proveedores
+        {
+            get { return _proveedores ?? (_proveedores = new Dependences<ProductoProveedor>("Producto", this)); }
+            set { _proveedores = value; }
         }
     }
 }

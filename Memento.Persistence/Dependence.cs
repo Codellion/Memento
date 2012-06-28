@@ -21,13 +21,7 @@ namespace Memento.Persistence
         /// de la dependencia
         /// </summary>
         private T _value;
-
-        /// <summary>
-        /// Atributo privado que sirve para almacenar los valores
-        /// de la dependencia de forma que se pueda controlar su "estado"
-        /// </summary>
-        private BindingList<T> _valueAux;
-
+        
         /// <summary>
         /// Nombre de la propiedad de la clase sobre la que tenemos
         /// la dependencia
@@ -83,8 +77,7 @@ namespace Memento.Persistence
 
                             if (res != null)
                             {
-                                _valueAux = new BindingList<T>(res);
-                                _value = _valueAux[0];
+                                _value = res[0];
 
                                 Status = StatusDependence.Synchronized;
                                 IsDirty = false;
@@ -108,13 +101,11 @@ namespace Memento.Persistence
             set
             {
                 IsDirty = true;
+                _value = value;
 
-                _valueAux = new BindingList<T> {value};
-                _value = _valueAux[0]; 
-
-                if(value.GetEntityId() != null)
+                if (_value.GetEntityId() != null)
                 {
-                    Status = value.IsDirty ? StatusDependence.Modified : StatusDependence.Synchronized;
+                    Status = _value.IsDirty ? StatusDependence.Modified : StatusDependence.Synchronized;
                 }
                 else
                 {
@@ -210,24 +201,17 @@ namespace Memento.Persistence
         {
             if (Value != null)
             {
-                _valueAux.ListChanged += ValueOnListChanged;
+                Value.PropertyChanged += ValueOnPropertyChanged;
             }
         }
 
-        private void ValueOnListChanged(object sender, ListChangedEventArgs listChangedEventArgs)
+        private void ValueOnPropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
         {
             IsDirty = true;
 
-            switch (listChangedEventArgs.ListChangedType)
+            if (Value.GetEntityId() != null)
             {
-                case ListChangedType.ItemChanged:
-
-                    if (_value.GetEntityId() != null)
-                    {
-                        Status = StatusDependence.Modified;    
-                    }
-
-                    break;
+                Status = StatusDependence.Modified;
             }
         }
 

@@ -97,7 +97,7 @@ namespace Memento.Persistence.Commons
 
         public bool IsDirty
         {
-            get { return _isDirty; }
+            get { return (_isDirty || GetEntityId() == null); }
             set { _isDirty = value; }
         }
 
@@ -179,6 +179,7 @@ namespace Memento.Persistence.Commons
 
             if (prop != value)
             {
+                IsDirty = true;
                 _propValues[info] = value;
 
                 if (PropertyChanged != null)

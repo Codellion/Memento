@@ -8,6 +8,7 @@ using System.Data;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
+using Memento.Persistence.Commons;
 using Memento.Persistence.Interfaces;
 using Memento.Test.Entities;
 using Memento.Persistence;
@@ -64,6 +65,16 @@ namespace Memento.Test.App
                     IPersistence<DetalleLinea> servPers = new Persistence<DetalleLinea>();
                     dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
                 }
+                else if (cmbEntidades.SelectedItem.Equals("Proveedor"))
+                {
+                    IPersistence<Proveedor> servPers = new Persistence<Proveedor>();
+                    dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
+                }
+                else if (cmbEntidades.SelectedItem.Equals("ProductoProveedor"))
+                {
+                    IPersistence<ProductoProveedor> servPers = new Persistence<ProductoProveedor>();
+                    dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
+                }
             }
             else
             {
@@ -105,19 +116,19 @@ namespace Memento.Test.App
 
         private void button3_Click(object sender, EventArgs e)
         {
-            IPersistence<Linea> pers = new Persistence<Linea>();
+            //IPersistence<Linea> pers = new Persistence<Linea>();
 
-            Linea linea = pers.GetEntity(1);
+            //Linea linea = pers.GetEntity(1);
 
-            IList<Linea> testLineas = pers.GetEntities(new Linea());
+            //IList<Linea> testLineas = pers.GetEntities(new Linea());
 
-            BindingList<Linea> lineas = linea.Producto.Value.Lineas.Value;
+            //BindingList<Linea> lineas = linea.Producto.Value.Lineas.Value;
 
-            Producto prod1 = new Producto();
-            prod1.Nombre = "Test1";
+            //Producto prod1 = new Producto();
+            //prod1.Nombre = "Test1";
 
-            Producto prod2 = new Producto();
-            prod2.Nombre = "Test2";
+            //Producto prod2 = new Producto();
+            //prod2.Nombre = "Test2";
 
             //using(DataContext context = new DataContext())
             //{
@@ -149,36 +160,61 @@ namespace Memento.Test.App
                 
 
 
-                Linea newLinea = new Linea();
-                newLinea.Cantidad = 2;
-                newLinea.Descripcion = "Test de dependencias";
-                newLinea.Producto = new Reference<Producto>(1);
-                newLinea.Factura = new Reference<Factura>(1);
+                //Linea newLinea = new Linea();
+                //newLinea.Cantidad = 2;
+                //newLinea.Descripcion = "Test de dependencias";
+                //newLinea.Producto = new Reference<Producto>(1);
+                //newLinea.Factura = new Reference<Factura>(1);
 
-                DetalleLinea detalleL = new DetalleLinea();
-                detalleL.Detalle = "Detalle de test de dependencias";
+                //DetalleLinea detalleL = new DetalleLinea();
+                //detalleL.Detalle = "Detalle de test de dependencias";
 
-                newLinea.DetalleLinea = new Dependence<DetalleLinea>(detalleL);
+                //newLinea.DetalleLinea = new Dependence<DetalleLinea>(detalleL);
 
-                newLinea.DetalleLinea.Value.Detalle = "test";
+                //newLinea.DetalleLinea.Value.Detalle = "test";
 
-                IPersistence<Linea> servLinea = new Persistence<Linea>();
-                servLinea.PersistEntity(newLinea);
+                //IPersistence<Linea> servLinea = new Persistence<Linea>();
+                //servLinea.PersistEntity(newLinea);
 
 
-                newLinea.DetalleLinea.Value.Detalle = "nuevo test";
-                servLinea.PersistEntity(newLinea);
+                //newLinea.DetalleLinea.Value.Detalle = "nuevo test";
+                //servLinea.PersistEntity(newLinea);
 
-                servLinea.DeleteEntity(newLinea);
+                //servLinea.DeleteEntity(newLinea);
                 
-                Factura newFactura = new Factura();
-                newFactura.Importe = 12.4f;
-                newFactura.Cliente = new Reference<Cliente>(1);
+                //Factura newFactura = new Factura();
+                //newFactura.Importe = 12.4f;
+                //newFactura.Cliente = new Reference<Cliente>(1);
 
-                newFactura.Lineas = new Dependences<Linea>(newLinea);
+                //newFactura.Lineas = new Dependences<Linea>(newLinea);
 
                 
-                newFactura = servFactura.PersistEntity(newFactura);
+                //newFactura = servFactura.PersistEntity(newFactura);
+
+
+                IPersistence<Proveedor> servProv = new Persistence<Proveedor>();
+                Proveedor proveedor2 = servProv.GetEntity(2);
+
+                IList<ProductoProveedor> prodsProv2 = proveedor2.Productos.Value;
+
+
+                IPersistence<Producto> servProd = new Persistence<Producto>();
+                Producto lapiz = servProd.GetEntity(1);
+
+                IList<ProductoProveedor> provsLapiz = lapiz.Proveedores.Value;
+
+                Proveedor newProv4 = new Proveedor();
+                newProv4.Nombre = "Nuevo Proveedor 5";
+                newProv4.Telefono = "5";
+                newProv4.Email = "e@x.com";
+
+                ProductoProveedor newProdProv = lapiz.Proveedores.CreateDependence();
+                newProdProv.Proveedor = new Reference<Proveedor>(newProv4);
+                newProdProv.Precio = 33;
+
+                provsLapiz.Add(newProdProv);
+
+                servProd.PersistEntity(lapiz);
             }
             catch (Exception ex)
             {

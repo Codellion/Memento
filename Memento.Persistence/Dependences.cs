@@ -21,7 +21,7 @@ namespace Memento.Persistence
         /// Atributo privado que sirve para almacenar los valores
         /// de las dependencias
         /// </summary>
-        private BindingList<T> _value;
+        private IList<T> _value;
 
         /// <summary>
         /// Nombre de la propiedad de la clase sobre la que tenemos
@@ -51,7 +51,7 @@ namespace Memento.Persistence
         /// <summary>
         /// Propiedad que permite la carga perezosa de los valores de las dependecias
         /// </summary>
-        public BindingList<T> Value
+        public IList<T> Value
         {
             get
             {
@@ -67,8 +67,6 @@ namespace Memento.Persistence
                         {
                             //Establecemos la relación entre ambas entidades
                             PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
-
-
 
                             object refAux = Activator.CreateInstance(prop.PropertyType);
                             refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
@@ -241,12 +239,30 @@ namespace Memento.Persistence
         }
 
         #endregion
+
+        public T CreateDependence()
+        {
+            T aux = Activator.CreateInstance<T>();
+
+            if (!string.IsNullOrEmpty(ReferenceName))
+            {
+                //Establecemos la relación entre ambas entidades
+                PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
+
+                object refAux = Activator.CreateInstance(prop.PropertyType);
+                refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
+
+                prop.SetValue(aux, refAux, null);
+            }
+
+            return aux;
+        }
         
         protected void Initialize()
         {
             if(Value != null)
             {
-                Value.ListChanged += ValueOnListChanged; 
+                ((BindingList<T>) Value).ListChanged += ValueOnListChanged; 
             }
 
             _inserts = new Dictionary<int, object>();
@@ -257,6 +273,8 @@ namespace Memento.Persistence
         private void ValueOnListChanged(object sender, ListChangedEventArgs listChangedEventArgs)
         {
             int newIndex = listChangedEventArgs.NewIndex;
+
+            IsDirty = true;
 
             switch (listChangedEventArgs.ListChangedType)
             {

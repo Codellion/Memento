@@ -520,6 +520,85 @@ namespace Memento.Persistence
             return entity;
         }
 
+        private void ManageRelationsNmEntity(Entity father, NmEntity relation, DataContext dtContext = null)
+        {
+            foreach (string propRefName in relation.References)
+            {
+                PropertyInfo refProp = relation.GetType().GetProperty(propRefName);
+
+                //Obtenemos la dependencia
+                Entity value = null;
+                object refValue = null;
+
+                if(refProp.GetValue(relation, null) != null)
+                {
+                    refValue = refProp.GetValue(relation, null);
+                    value = (Entity)refValue.GetType().GetProperty("Value").GetValue(refValue, null);
+                }
+
+                //Para evitar referencias circulares a la hora de persistir de nuevo la entidad padre
+                //que se está procesando comprobamos que sea distinta
+                if(value != null 
+                    && value.GetType() == father.GetType()
+                    && value.GetEntityId().Equals(father.GetEntityId()))
+                {
+                    continue;
+                }
+
+                if (value != null && value.IsDirty)
+                {
+                    Type tPersServ = typeof(Persistence<>);
+                    Type genericType = value.GetType();
+
+                    tPersServ = tPersServ.MakeGenericType(genericType);
+                    object pService = GetServicePersistence(genericType, dtContext);
+
+                    if(pService != null)
+                    {
+                        object valueAux = tPersServ.GetMethod("PersistEntity").Invoke(pService, new object[] { value });
+
+                        if(valueAux != null && valueAux is Entity)
+                        {
+                            value = (Entity) valueAux;
+                            value.IsDirty = false;
+
+                            refValue.GetType().GetProperty("Value").SetValue(refValue, value, null);
+                        }
+                    }
+                }
+            }
+        }
+
+        private object GetServicePersistence(Type type, DataContext dtContext = null)
+        {
+            //Obtenemos el servicio de persistencia oportuno para el tipo de la dependencia
+            Type tPersServ = typeof (Persistence<>);
+
+            tPersServ = tPersServ.MakeGenericType(type);
+
+            ConstructorInfo constructor;
+            object pService = null;
+
+            if(dtContext == null)
+            {
+                constructor = tPersServ.GetConstructor(new Type[] {});
+                if(constructor != null)
+                {
+                    pService = constructor.Invoke(new object[] { });    
+                }
+            }
+            else
+            {
+                constructor = tPersServ.GetConstructor(new Type[] { typeof(DataContext) });
+                if (constructor != null)
+                {
+                    pService = constructor.Invoke(new object[] {dtContext});
+                }
+            }
+
+            return pService;
+        }
+
         /// <summary>
         /// Se encarga de persistir u modificar las dependencias relacionadas con una entidad
         /// </summary>
@@ -533,34 +612,16 @@ namespace Memento.Persistence
             foreach (string propDepName in entity.Dependences)
             {
                 PropertyInfo depProp = tipoEntidad.GetProperty(propDepName);
-
+                
                 //Obtenemos la dependencia
                 object depValue = depProp.GetValue(entity, null);
-
+                
                 //Obtenemos el servicio de persistencia oportuno para el tipo de la dependencia
                 Type tPersServ = typeof (Persistence<>);
+                Type genericType = depProp.PropertyType.GetGenericArguments()[0];
 
-                tPersServ = tPersServ.MakeGenericType(depProp.PropertyType.GetGenericArguments()[0]);
-
-                ConstructorInfo constructor;
-                object pService = null;
-
-                if(dtContext == null)
-                {
-                    constructor = tPersServ.GetConstructor(new Type[] {});
-                    if(constructor != null)
-                    {
-                        pService = constructor.Invoke(new object[] { });    
-                    }
-                }
-                else
-                {
-                    constructor = tPersServ.GetConstructor(new Type[] { typeof(DataContext) });
-                    if (constructor != null)
-                    {
-                        pService = constructor.Invoke(new object[] {dtContext});
-                    }
-                }
+                tPersServ = tPersServ.MakeGenericType(genericType);
+                object pService = GetServicePersistence(genericType, dtContext);
 
                 if(pService != null)
                 {
@@ -576,7 +637,7 @@ namespace Memento.Persistence
                         //Si la dependencia no ha sido modificada no hacemos nada
                         if (!isDirty && entity.Activo)
                         {
-                            return;
+                            continue;
                         }
                                                 
                         //Actualizamos la referencia de la entidad padre recien creada
@@ -651,25 +712,27 @@ namespace Memento.Persistence
                         //Si la colección no ha sido modificada no hacemos nada
                         if(!isDirty)
                         {
-                            return;   
+                            continue;   
                         }
 
-                        ManageSubList("PersistEntity", "Inserts", depValue, entityId, pService);
-                        ManageSubList("UpdateEntity", "Updates", depValue, entityId, pService);
-                        ManageSubList("DeleteEntity", "Deletes", depValue, entityId, pService);
+                        ManageSubList("PersistEntity", "Inserts", depValue, entity, pService, dtContext);
+                        ManageSubList("UpdateEntity", "Updates", depValue, entity, pService, dtContext);
+                        ManageSubList("DeleteEntity", "Deletes", depValue, entity, pService, dtContext);
 
-                        depValue.GetType().GetMethod("Initialize", BindingFlags.NonPublic | BindingFlags.Instance).
-                            Invoke(depValue, null);
+                        depValue.GetType().GetMethod("Initialize", 
+                            BindingFlags.NonPublic | BindingFlags.Instance).Invoke(depValue, null);
                     }
 
-                    //Seteamos el valor insertado
+                    //Establecemos el valor insertado
                     depProp.SetValue(entity, depValue, null);
                 }
             }
         }
 
-        private void ManageSubList(string persistMethod, string subList, object value, object entityId, object pService)
+        private void ManageSubList(string persistMethod, string subList, object value, Entity entity, object pService, DataContext dtContext = null)
         {
+            object entityId = entity.GetEntityId();
+
             Type tipoEntidad = typeof (T);
             Type tPersServ = pService.GetType();
 
@@ -692,6 +755,13 @@ namespace Memento.Persistence
                 if (currentDepProp != null)
                 {
                     object currentDepValue = currentDepProp.GetValue(enumerator, null);
+
+                    //Si la dependencia es una relación N-M es necesario asegurarnos de que todas
+                    //las entidades de la relación existen para poder insertar las FKs
+                    if (currentDepValue is NmEntity)
+                    {
+                        ManageRelationsNmEntity(entity, (NmEntity)currentDepValue, dtContext);
+                    }
 
                     //Actualizamos la referencia de la entidad padre recien creada
 
