@@ -1,6 +1,5 @@
 using System;
 using System.Data;
-
 using Memento.DataAccess;
 using Memento.Persistence.Commons;
 
@@ -14,8 +13,6 @@ namespace Memento.Persistence
     {
         #region Atributos
 
-        private IDbTransaction _transaction;
-        private IDbConnection _connection;
         private bool _isOpenTransaction;
 
         #endregion
@@ -25,20 +22,12 @@ namespace Memento.Persistence
         /// <summary>
         /// Base de datos utilizada en la transacción
         /// </summary>
-        public IDbConnection Connection
-        {
-            get { return _connection; }
-            set { _connection = value; }
-        }
+        public IDbConnection Connection { get; set; }
 
         /// <summary>
         /// Transacción en curso
         /// </summary>
-        public IDbTransaction Transaction
-        {
-            get { return _transaction; }
-            set { _transaction = value; }
-        }
+        public IDbTransaction Transaction { get; set; }
 
         #endregion
 
@@ -125,7 +114,7 @@ namespace Memento.Persistence
         {
             if (Transaction != null)
             {
-                if(_isOpenTransaction)
+                if (_isOpenTransaction)
                 {
                     Transaction.Rollback();
                     _isOpenTransaction = false;
@@ -134,9 +123,9 @@ namespace Memento.Persistence
                 Transaction.Dispose();
             }
 
-            if(Connection.State == ConnectionState.Open)
+            if (Connection.State == ConnectionState.Open)
             {
-                Connection.Close(); 
+                Connection.Close();
             }
         }
 

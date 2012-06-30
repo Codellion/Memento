@@ -17,36 +17,20 @@ namespace Memento.Persistence
         #region Atributos
 
         /// <summary>
-        /// Atributo privado que sirve para almacenar el valor
-        /// de la dependencia
-        /// </summary>
-        private T _value;
-        
-        /// <summary>
-        /// Nombre de la propiedad de la clase sobre la que tenemos
-        /// la dependencia
-        /// </summary>
-        private string _referenceName;
-
-        /// <summary>
-        /// Entidad que contiene la dependencia
-        /// </summary>
-        private Entity _entityRef;
-
-        /// <summary>
         /// Estado de la dependencia
         /// </summary>
         private StatusDependence _status = StatusDependence.Unknown;
 
         /// <summary>
-        /// Indica si la lista de dependencias fue creado por el usuario y no traida desde la BBDD
+        /// Atributo privado que sirve para almacenar el valor
+        /// de la dependencia
         /// </summary>
-        private bool _isDirty;
+        private T _value;
 
         #endregion
-        
+
         #region Propiedades
-               
+
         /// <summary>
         /// Propiedad que permite la carga perezosa del valor de la dependecia
         /// </summary>
@@ -54,47 +38,40 @@ namespace Memento.Persistence
         {
             get
             {
-                try
+                if (_value == null)
                 {
-                    if (_value == null)
+                    IPersistence<T> servicioPers = new Persistence<T>();
+
+                    var aux = Activator.CreateInstance<T>();
+
+                    if (!string.IsNullOrEmpty(ReferenceName))
                     {
-                        IPersistence<T> servicioPers = new Persistence<T>();
+                        //Establecemos la relación entre ambas entidades
+                        PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
 
-                        T aux = Activator.CreateInstance<T>();
+                        object refAux = Activator.CreateInstance(prop.PropertyType);
+                        refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
 
-                        if (!string.IsNullOrEmpty(ReferenceName))
+                        prop.SetValue(aux, refAux, null);
+
+                        //Realizamos la busqueda de los datos relacionados
+                        IList<T> res = servicioPers.GetEntities(aux);
+
+                        if (res != null)
                         {
-                            //Establecemos la relación entre ambas entidades
-                            PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
+                            _value = res[0];
 
-                            object refAux = Activator.CreateInstance(prop.PropertyType);
-                            refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
-
-                            prop.SetValue(aux, refAux, null);
-
-                            //Realizamos la busqueda de los datos relacionados
-                            IList<T> res = servicioPers.GetEntities(aux) as IList<T>;
-
-                            if (res != null)
-                            {
-                                _value = res[0];
-
-                                Status = StatusDependence.Synchronized;
-                                IsDirty = false;
-                            }
-                            else
-                            {
-                                _value = Activator.CreateInstance<T>();
-                                Status = StatusDependence.Unknown;
-                            }
+                            Status = StatusDependence.Synchronized;
+                            IsDirty = false;
+                        }
+                        else
+                        {
+                            _value = Activator.CreateInstance<T>();
+                            Status = StatusDependence.Unknown;
                         }
                     }
                 }
-                catch (Exception)
-                {
-                    //TODO Registrar error
-                }
-                
+
                 return _value;
             }
 
@@ -117,30 +94,18 @@ namespace Memento.Persistence
         /// <summary>
         /// Entidad que contiene la dependencia 
         /// </summary>
-        public Entity EntityRef
-        {
-            get { return _entityRef; }
-            set { _entityRef = value; }
-        }
+        public Entity EntityRef { get; set; }
 
         /// <summary>
         /// Nombre de la propiedad de la clase sobre la que tenemos
         /// la dependencia
         /// </summary>
-        public string ReferenceName
-        {
-            get { return _referenceName; }
-            set { _referenceName = value; }
-        }
+        public string ReferenceName { get; set; }
 
         /// <summary>
         /// Indica si la lista de dependencias fue creado por el usuario y no traida desde la BBDD
         /// </summary>
-        public bool IsDirty
-        {
-            get { return _isDirty; }
-            set { _isDirty = value; }
-        }
+        public bool IsDirty { get; set; }
 
         /// <summary>
         /// Estado de la dependencia
@@ -189,8 +154,8 @@ namespace Memento.Persistence
             IsDirty = false;
             Status = StatusDependence.Unknown;
 
-            _referenceName = refName;
-            _entityRef = entidad;
+            ReferenceName = refName;
+            EntityRef = entidad;
 
             Initialize();
         }

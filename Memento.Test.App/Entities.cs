@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Configuration;
 using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
-using Memento.Persistence.Commons;
+using Memento.Persistence;
 using Memento.Persistence.Interfaces;
 using Memento.Test.Entities;
-using Memento.Persistence;
 
 namespace Memento.Test.App
 {
@@ -24,11 +19,11 @@ namespace Memento.Test.App
 
         private void Entities_Load(object sender, EventArgs e)
         {
-            NameValueCollection section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
+            var section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
 
             cmbEntidades.Items.Clear();
 
-            foreach(string cls in section.AllKeys)
+            foreach (string cls in section.AllKeys)
             {
                 cmbEntidades.Items.Add(section[cls]);
             }
@@ -38,9 +33,9 @@ namespace Memento.Test.App
 
         private void cmbEntidades_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if(cmbEntidades.SelectedIndex != 0)
-            {   
-                if(cmbEntidades.SelectedItem.Equals("Producto"))
+            if (cmbEntidades.SelectedIndex != 0)
+            {
+                if (cmbEntidades.SelectedItem.Equals("Producto"))
                 {
                     IPersistence<Producto> servPers = new Persistence<Producto>();
                     dgData.DataSource = servPers.GetEntitiesDs().Tables[0];
@@ -88,18 +83,17 @@ namespace Memento.Test.App
             {
                 foreach (DataGridViewRow row in dgData.Rows)
                 {
-                    if(row.IsNewRow)
+                    if (row.IsNewRow)
                     {
-                        
                     }
                     else
                     {
-                        DataRowView drv = row.DataBoundItem as DataRowView;
+                        var drv = row.DataBoundItem as DataRowView;
 
                         switch (drv.Row.RowState)
                         {
                             case DataRowState.Modified:
-                                
+
                                 break;
                             case DataRowState.Deleted:
 
@@ -116,6 +110,8 @@ namespace Memento.Test.App
 
         private void button3_Click(object sender, EventArgs e)
         {
+            var cli = new Cliente();
+            cli.Nombre = "test";
             //IPersistence<Linea> pers = new Persistence<Linea>();
 
             //Linea linea = pers.GetEntity(1);
@@ -157,7 +153,6 @@ namespace Memento.Test.App
                 //factura.Lineas.Value.RemoveAt(1);
 
                 //servFactura.PersistEntity(factura);
-                
 
 
                 //Linea newLinea = new Linea();
@@ -181,14 +176,14 @@ namespace Memento.Test.App
                 //servLinea.PersistEntity(newLinea);
 
                 //servLinea.DeleteEntity(newLinea);
-                
+
                 //Factura newFactura = new Factura();
                 //newFactura.Importe = 12.4f;
                 //newFactura.Cliente = new Reference<Cliente>(1);
 
                 //newFactura.Lineas = new Dependences<Linea>(newLinea);
 
-                
+
                 //newFactura = servFactura.PersistEntity(newFactura);
 
 
@@ -203,7 +198,7 @@ namespace Memento.Test.App
 
                 IList<ProductoProveedor> provsLapiz = lapiz.Proveedores.Value;
 
-                Proveedor newProv4 = new Proveedor();
+                var newProv4 = new Proveedor();
                 newProv4.Nombre = "Nuevo Proveedor 5";
                 newProv4.Telefono = "5";
                 newProv4.Email = "e@x.com";
@@ -220,7 +215,7 @@ namespace Memento.Test.App
             {
                 MessageBox.Show(ex.Message);
             }
-            
+
 
             string dummy;
         }

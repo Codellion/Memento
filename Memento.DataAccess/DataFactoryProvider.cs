@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Configuration;
 using System.Data;
 using System.Reflection;
 using Memento.DataAccess.Interfaces;
-using System.Configuration;
+using Memento.Persistence.Commons;
 
 namespace Memento.DataAccess
 {
@@ -18,11 +19,11 @@ namespace Memento.DataAccess
         /// <typeparam name="T">Tipo de la entidad sobre la que se quiere obtener el servicio</typeparam>
         /// <param name="transaction">Transaccion abierta</param>
         /// <returns>Implementación del interfaz de acceso a datos</returns>
-        public static IDataPersistence<T> GetProvider<T>(IDbTransaction transaction)
+        public static IDataPersistence GetProvider<T>(IDbTransaction transaction)
         {
-            IDataPersistence<T> res = null;
+            IDataPersistence res = null;
 
-            if (IsEntity(typeof(T)))
+            if (IsEntity(typeof (T)))
             {
                 string proveedorPers = ConfigurationManager.AppSettings["proveedorPersistencia"];
                 string assemblyPers = ConfigurationManager.AppSettings["emsambladoProveedorPersistencia"];
@@ -35,22 +36,21 @@ namespace Memento.DataAccess
                     tProveedor = asm.GetType(proveedorPers);
                 }
 
-                if(tProveedor != null)
+                if (tProveedor != null)
                 {
-                    Type[] genParam = new Type[1];
-                    genParam[0] = typeof(T);
+                    var genParam = new Type[1];
+                    genParam[0] = typeof (T);
 
                     tProveedor = tProveedor.MakeGenericType(genParam);
                     object[] parametros = null;
 
-                    if(transaction != null)
+                    if (transaction != null)
                     {
                         parametros = new object[1];
                         parametros[0] = transaction;
                     }
 
-                    res = Activator.CreateInstance(tProveedor, parametros) as IDataPersistence<T>;
-                    
+                    res = Activator.CreateInstance(tProveedor, parametros) as IDataPersistence;
                 }
             }
 
@@ -65,9 +65,6 @@ namespace Memento.DataAccess
 
         public static IDbConnection GetConnection<T>(string entornoBd)
         {
-            IDataPersistence<T> res = null;
-
-            
             string proveedorPers = ConfigurationManager.AppSettings["proveedorPersistencia"];
             string assemblyPers = ConfigurationManager.AppSettings["emsambladoProveedorPersistencia"];
 
@@ -81,21 +78,22 @@ namespace Memento.DataAccess
 
             if (tProveedor != null)
             {
-                Type[] genParam = new Type[1];
-                genParam[0] = typeof(T);
+                var genParam = new Type[1];
+                genParam[0] = typeof (T);
 
                 tProveedor = tProveedor.MakeGenericType(genParam);
 
-                if(string.IsNullOrEmpty(entornoBd))
+                IDataPersistence res;
+                if (string.IsNullOrEmpty(entornoBd))
                 {
-                    res = Activator.CreateInstance(tProveedor) as IDataPersistence<T>;    
+                    res = Activator.CreateInstance(tProveedor) as IDataPersistence;
                 }
                 else
                 {
-                    object[] param = new object[1];
+                    var param = new object[1];
                     param[0] = entornoBd;
 
-                    res = Activator.CreateInstance(tProveedor, param) as IDataPersistence<T>;
+                    res = Activator.CreateInstance(tProveedor, param) as IDataPersistence;
                 }
 
                 if (res != null)
@@ -103,7 +101,7 @@ namespace Memento.DataAccess
                     return res.GetConnection();
                 }
             }
-            
+
 
             return null;
         }
@@ -115,27 +113,7 @@ namespace Memento.DataAccess
         /// <returns>Verdadero si el tipo hereda de Entidad</returns>
         private static bool IsEntity(Type type)
         {
-            bool res = false;
-
-            Type typeBase = type.BaseType;
-
-            while (typeBase.BaseType != null && !typeBase.BaseType.Equals(typeof(Object)))
-            {
-                typeBase = typeBase.BaseType;
-            }
-
-            if (typeBase.Name.Equals("Entity"))
-            {
-                res = true;
-            }
-
-            return res;
-        }
-
-        public static string GetSChema()
-        {
-            string schema = ConfigurationManager.AppSettings["esquemaBD"];
-            return schema;
+            return (Activator.CreateInstance(type) is Entity);
         }
     }
 }

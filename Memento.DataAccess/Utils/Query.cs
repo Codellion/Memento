@@ -9,26 +9,6 @@ namespace Memento.DataAccess.Utils
     {
         #region Atributos
 
-        /// <summary>
-        /// Columnas de la query
-        /// </summary>
-        private string _cols;
-
-        /// <summary>
-        /// Tablas de la query
-        /// </summary>
-        private string _tables;
-
-        /// <summary>
-        /// Clausulas del where
-        /// </summary>
-        private string _filters;
-        
-        /// <summary>
-        /// Valores del insert o update
-        /// </summary>
-        private string _values;
-
         #endregion
 
         #region Propiedades
@@ -36,46 +16,29 @@ namespace Memento.DataAccess.Utils
         /// <summary>
         /// Columnas de la query
         /// </summary>
-        public string Cols
-        {
-            get { return _cols; }
-            set { _cols = value; }
-        }
+        public string Cols { get; set; }
 
         /// <summary>
         /// Tablas de la query
         /// </summary>
-        public string Tables
-        {
-            get { return _tables; }
-            set { _tables = value; }
-        }
+        public string Tables { get; set; }
 
         /// <summary>
         /// Clausulas del where
         /// </summary>
-        public string Filters
-        {
-            get { return _filters; }
-            set { _filters = value; }
-        }
+        public string Filters { get; set; }
 
         /// <summary>
         /// Valores en un insert o update
         /// </summary>
-        public string Values
-        {
-            get { return _values; }
-            set { _values = value; }
-        }
-       
+        public string Values { get; set; }
+
         #endregion
 
         #region Constructores
 
         public Query()
         {
-            
         }
 
         /// <summary>
@@ -98,7 +61,7 @@ namespace Memento.DataAccess.Utils
         /// <param name="values">Valores</param>
         /// <param name="sTables">Tablas</param>
         /// <param name="sFilters">Filtros</param>
-        public Query(string sCols, string values ,string sTables, string sFilters)
+        public Query(string sCols, string values, string sTables, string sFilters)
         {
             Cols = sCols;
             Values = values;
@@ -129,7 +92,7 @@ namespace Memento.DataAccess.Utils
 
             return res;
         }
-    
+
         public string ToSelect()
         {
             return ToString();
@@ -138,7 +101,7 @@ namespace Memento.DataAccess.Utils
         public string ToInsert()
         {
             return String.Format(" INSERT INTO {0} ({1}) VALUES ({2}) ; SELECT  @@IDENTITY AS ID;",
-                                   Tables, Cols, Values);
+                                 Tables, Cols, Values);
         }
 
         public string ToUpdate()
@@ -162,7 +125,7 @@ namespace Memento.DataAccess.Utils
         public string ToDelete()
         {
             return String.Format(" UPDATE {0} SET Activo = 0 WHERE {1} ",
-                                    Tables, Filters); ;
+                                 Tables, Filters);
         }
     }
 }

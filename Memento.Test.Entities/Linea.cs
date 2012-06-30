@@ -1,34 +1,45 @@
-﻿using Memento.Persistence;
+﻿using System.Data;
+using Memento.Persistence;
 using Memento.Persistence.Commons;
+using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.Test.Entities
 {
     public class Linea : Entity
     {
+        [PrimaryKey(Generator = KeyGenerationType.Database)]
+        [Field(Name = "LineaId")]
         public long? LineaId
         {
-            set { Set("LineaId", value); }
-            get { return Get<long?>("LineaId"); }
+            set { Set(value); }
+            get { return Get<long?>(); }
         }
+
+        [Field]
         public string Descripcion
         {
-            set { Set("Descripcion", value); }
-            get { return Get<string>("Descripcion"); }
+            set { Set(value); }
+            get { return Get<string>(); }
         }
+
+        [Field]
         public int? Cantidad
         {
-            set { Set("Cantidad", value); }
-            get { return Get<int?>("Cantidad"); }
+            set { Set(value); }
+            get { return Get<int?>(); }
         }
 
-        private Dependence<DetalleLinea> _detalleLinea;
+        [Relation("ProductoId", "Lineas", RelationType.Reference)]
+        public Reference<Producto> Producto { set; get; }
+
+        [Relation("FacturaId", "Lineas", RelationType.Reference)]
+        public Reference<Factura> Factura { set; get; }
+
+        [Relation("LineaId", "Linea", RelationType.Dependence)]
         public Dependence<DetalleLinea> DetalleLinea
         {
-            get { return _detalleLinea ?? (_detalleLinea = new Dependence<DetalleLinea>("Linea", this)); }
-            set { _detalleLinea = value; }
+            set { Set(value); }
+            get { return Get<Dependence<DetalleLinea>>(); }
         }
-
-        public Reference<Producto> Producto { set; get; }
-        public Reference<Factura> Factura { set; get; }
     }
 }

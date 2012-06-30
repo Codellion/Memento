@@ -8,29 +8,19 @@ namespace Memento.Persistence
     /// Clase que representa la referencia de una entidad
     /// </summary>
     /// <typeparam name="T">Tipo del valor almacenado</typeparam>
-    public class Reference<T> : EaterEntity where T:Entity
+    public class Reference<T> : EaterEntity where T : Entity
     {
         #region Atributos
 
-        /// <summary>
-        /// Atributo privado que sirve para almacenar el valor
-        /// de la referencia
-        /// </summary>
-        private T _value;
-
         #endregion
-        
+
         #region Propiedades
-               
+
         /// <summary>
         /// Propiedad que sirve para almacenar el valor
         /// de la referencia
         /// </summary>
-        public T Value
-        {
-            get { return _value; }
-            set { _value = value; }
-        }
+        public T Value { get; set; }
 
         #endregion
 
@@ -41,7 +31,6 @@ namespace Memento.Persistence
         /// </summary>
         public Reference()
         {
-            
         }
 
         /// <summary>
@@ -50,15 +39,7 @@ namespace Memento.Persistence
         public Reference(object valueId)
         {
             Value = Activator.CreateInstance<T>();
-
-            Type tipoEntidad = typeof(T);
-
-            PropertyInfo propId = tipoEntidad.GetProperty(tipoEntidad.Name + "Id");
-            Type nullType = Nullable.GetUnderlyingType(propId.PropertyType);
-
-            object nullValue = nullType != null ? Convert.ChangeType(valueId, nullType) : valueId;
-
-            propId.SetValue(Value, nullValue, null);
+            Value.SetEntityId(valueId);
         }
 
         /// <summary>

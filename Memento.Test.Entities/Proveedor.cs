@@ -1,36 +1,46 @@
-﻿using Memento.Persistence;
+﻿using System.Data;
+using Memento.Persistence;
 using Memento.Persistence.Commons;
+using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.Test.Entities
 {
     public class Proveedor : Entity
     {
+        [PrimaryKey(Generator = KeyGenerationType.Database)]
+        [Field(Name = "ProveedorId")]
         public int? ProveedorId
         {
-            set { Set("ProveedorId", value); }
-            get { return Get<int?>("ProveedorId"); }
-        }
-        public string Nombre
-        {
-             set { Set("Nombre", value); }
-             get { return Get<string>("Nombre"); }
-        }
-        public string Telefono
-        {
-            set { Set("Telefono", value); }
-            get { return Get<string>("Telefono"); }
-        }
-        public string Email
-        {
-            set { Set("Email", value); }
-            get { return Get<string>("Email"); }
+            set { Set(value); }
+            get { return Get<int?>(); }
         }
 
-        private Dependences<ProductoProveedor> _productos;
+        [Field(Required = true)]
+        public string Nombre
+        {
+            set { Set(value); }
+            get { return Get<string>(); }
+        }
+
+        [Field]
+        public string Telefono
+        {
+            set { Set(value); }
+            get { return Get<string>(); }
+        }
+
+        [Field]
+        public string Email
+        {
+            set { Set(value); }
+            get { return Get<string>(); }
+        }
+
+        [Relation("ProveedorId", "Proveedor", RelationType.Dependences)]
         public Dependences<ProductoProveedor> Productos
         {
-            get { return _productos ?? (_productos = new Dependences<ProductoProveedor>("Proveedor", this)); }
-            set { _productos = value; }
+            set { Set(value); }
+            get { return Get<Dependences<ProductoProveedor>>(); }
         }
     }
 }

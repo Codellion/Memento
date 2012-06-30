@@ -4,7 +4,6 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Reflection;
-
 using Memento.DataAccess.Interfaces;
 using Memento.DataAccess.Utils;
 using Memento.Persistence.Commons;
@@ -17,9 +16,8 @@ namespace Memento.DataAccess.EntLib5
     /// para ello se ha utilizado el servicio de acceso a BBDD de Enterprise Library 5.0
     /// </summary>
     /// <typeparam name="T">Tipo de la entidad con la que se va operar</typeparam>
-    public class BdPersistence<T> : IDataPersistence<T> where T: Entity
+    public class BdPersistence<T> : IDataPersistence where T : Entity
     {
-
         #region Constantes
 
         /// <summary>
@@ -34,12 +32,12 @@ namespace Memento.DataAccess.EntLib5
         /// <summary>
         /// Base datos sobre la que se opera
         /// </summary>
-        private Database servicioDatos;
+        private readonly Database _servicioDatos;
 
         /// <summary>
         /// Transacción actual en curso en caso de existir
         /// </summary>
-        private DbTransaction transaccion;
+        private readonly DbTransaction _transaccion;
 
         #endregion
 
@@ -50,7 +48,7 @@ namespace Memento.DataAccess.EntLib5
         /// </summary>
         public BdPersistence()
         {
-            servicioDatos = DatabaseFactory.CreateDatabase(Entorno);
+            _servicioDatos = DatabaseFactory.CreateDatabase(Entorno);
         }
 
         /// <summary>
@@ -58,7 +56,7 @@ namespace Memento.DataAccess.EntLib5
         /// </summary>
         public BdPersistence(string entorno)
         {
-            servicioDatos = DatabaseFactory.CreateDatabase(entorno);
+            _servicioDatos = DatabaseFactory.CreateDatabase(entorno);
         }
 
         /// <summary>
@@ -68,8 +66,8 @@ namespace Memento.DataAccess.EntLib5
         /// <param name="transaccion">Transacción activa</param>
         public BdPersistence(IDbTransaction transaccion)
         {
-            servicioDatos = DatabaseFactory.CreateDatabase(Entorno);
-            this.transaccion = transaccion as DbTransaction;
+            _servicioDatos = DatabaseFactory.CreateDatabase(Entorno);
+            _transaccion = transaccion as DbTransaction;
         }
 
         /// <summary>
@@ -80,8 +78,8 @@ namespace Memento.DataAccess.EntLib5
         /// <param name="transaccion">Transacción activa</param>
         public BdPersistence(string entorno, IDbTransaction transaccion)
         {
-            servicioDatos = DatabaseFactory.CreateDatabase(entorno);
-            this.transaccion = transaccion as DbTransaction;
+            _servicioDatos = DatabaseFactory.CreateDatabase(entorno);
+            _transaccion = transaccion as DbTransaction;
         }
 
         #endregion
@@ -96,32 +94,18 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>Identificador de la entidad persistida</returns>
         public object InsertEntity(Entity entidad)
         {
-            Query query = DbUtil<T>.GetInsert((T)entidad);
+            Query query = DbUtil<T>.GetInsert((T) entidad);
 
-            object id;
-
-            if (transaccion != null)
-            {
-                id = servicioDatos.ExecuteScalar(transaccion, CommandType.Text, query.ToInsert());
-            }
-            else
-            {
-                id = servicioDatos.ExecuteScalar(CommandType.Text, query.ToInsert());
-            }
+            object id = _transaccion != null
+                            ? _servicioDatos.ExecuteScalar(_transaccion, CommandType.Text, query.ToInsert())
+                            : _servicioDatos.ExecuteScalar(CommandType.Text, query.ToInsert());
 
             if (id == null)
             {
                 throw new Exception("Ocurrió un error desconocido al insertar el registro.");
             }
 
-            Type tipoT = typeof(T);
-            Type tId = tipoT.GetProperty(tipoT.Name + "Id").PropertyType;
-
-            Type nullType = Nullable.GetUnderlyingType(tId);
-
-            object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
-
-            return nullValue;
+            return id;
         }
 
         /// <summary>
@@ -130,15 +114,15 @@ namespace Memento.DataAccess.EntLib5
         /// <param name="entidad">Entidad actualizada</param>
         public void UpdateEntity(Entity entidad)
         {
-            Query query = DbUtil<T>.GetUpdate((T)entidad);
+            Query query = DbUtil<T>.GetUpdate((T) entidad);
 
-            if (transaccion != null)
+            if (_transaccion != null)
             {
-                servicioDatos.ExecuteNonQuery(transaccion, CommandType.Text, query.ToUpdate());
+                _servicioDatos.ExecuteNonQuery(_transaccion, CommandType.Text, query.ToUpdate());
             }
             else
             {
-                servicioDatos.ExecuteNonQuery(CommandType.Text, query.ToUpdate());
+                _servicioDatos.ExecuteNonQuery(CommandType.Text, query.ToUpdate());
             }
         }
 
@@ -150,13 +134,13 @@ namespace Memento.DataAccess.EntLib5
         {
             Query query = DbUtil<T>.GetDelete(entidadId);
 
-            if (transaccion != null)
+            if (_transaccion != null)
             {
-                servicioDatos.ExecuteNonQuery(transaccion, CommandType.Text, query.ToDelete());
+                _servicioDatos.ExecuteNonQuery(_transaccion, CommandType.Text, query.ToDelete());
             }
             else
             {
-                servicioDatos.ExecuteNonQuery(CommandType.Text, query.ToDelete());
+                _servicioDatos.ExecuteNonQuery(CommandType.Text, query.ToDelete());
             }
         }
 
@@ -168,20 +152,12 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>Entidad que se recupera</returns>
         public IDataReader GetEntity(object entidadId)
         {
-            T aux = Activator.CreateInstance<T>();
-            Type gType = aux.GetType();
+            var aux = Activator.CreateInstance<T>();
 
-            PropertyInfo pPk = gType.GetProperty(gType.Name + "Id");
-
-            Type nullType = Nullable.GetUnderlyingType(pPk.PropertyType);
-
-            object nullValue = nullType != null ? Convert.ChangeType(entidadId, nullType) : entidadId;
-
-            pPk.SetValue(aux, nullValue, null);
-
+            aux.SetEntityId(entidadId);
             Query query = DbUtil<T>.GetQuery(aux);
 
-            return servicioDatos.ExecuteReader(CommandType.Text, query.ToSelect());
+            return _servicioDatos.ExecuteReader(CommandType.Text, query.ToSelect());
         }
 
         /// <summary>
@@ -190,11 +166,11 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>Entidades activas</returns>
         public IDataReader GetEntities()
         {
-            T aux = Activator.CreateInstance<T>();
-            
+            var aux = Activator.CreateInstance<T>();
+
             Query query = DbUtil<T>.GetQuery(aux);
 
-            return servicioDatos.ExecuteReader(CommandType.Text, query.ToSelect());
+            return _servicioDatos.ExecuteReader(CommandType.Text, query.ToSelect());
         }
 
         /// <summary>
@@ -205,9 +181,9 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>Entidades filtradas</returns>
         public IDataReader GetEntities(Entity entidadFiltro)
         {
-            Query query = DbUtil<T>.GetQuery((T)entidadFiltro);
+            Query query = DbUtil<T>.GetQuery((T) entidadFiltro);
 
-            return servicioDatos.ExecuteReader(CommandType.Text, query.ToSelect());
+            return _servicioDatos.ExecuteReader(CommandType.Text, query.ToSelect());
         }
 
         /// <summary>
@@ -216,11 +192,11 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>DataSet con las entidades activas</returns>
         public DataSet GetEntitiesDs()
         {
-            T aux = Activator.CreateInstance<T>();
-            
+            var aux = Activator.CreateInstance<T>();
+
             Query query = DbUtil<T>.GetQuery(aux);
 
-            return servicioDatos.ExecuteDataSet(CommandType.Text, query.ToSelect());
+            return _servicioDatos.ExecuteDataSet(CommandType.Text, query.ToSelect());
         }
 
         /// <summary>
@@ -231,9 +207,9 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>DataSet con las entidades filtradas</returns>
         public DataSet GetEntitiesDs(Entity entidadFiltro)
         {
-            Query query = DbUtil<T>.GetQuery((T)entidadFiltro);
+            Query query = DbUtil<T>.GetQuery((T) entidadFiltro);
 
-            return servicioDatos.ExecuteDataSet(CommandType.Text, query.ToSelect());
+            return _servicioDatos.ExecuteDataSet(CommandType.Text, query.ToSelect());
         }
 
         /// <summary>
@@ -245,23 +221,22 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>Dataset con los resultados</returns>
         public DataSet GetEntitiesDs(string storeProcedure, IDictionary<string, object> parametros)
         {
-            object[] parametrosProc = new object[parametros.Count];
+            var parametrosProc = new object[parametros.Count];
             int count = 0;
 
             foreach (string key in parametros.Keys)
             {
                 object valor = parametros[key];
-                SqlParameter param = new SqlParameter(key, DbUtil<T>.GetDbType(valor.GetType()));
-                param.Value = valor;
+                var param = new SqlParameter(key, DbUtil<T>.GetDbType(valor.GetType())) {Value = valor};
 
                 parametrosProc[count] = param;
 
                 count++;
             }
 
-            storeProcedure = string.Format("[{0}].{1}", DataFactoryProvider.GetSChema(), storeProcedure);
+            storeProcedure = string.Format("{0}", storeProcedure);
 
-            return servicioDatos.ExecuteDataSet(storeProcedure, parametrosProc);
+            return _servicioDatos.ExecuteDataSet(storeProcedure, parametrosProc);
         }
 
 
@@ -271,10 +246,9 @@ namespace Memento.DataAccess.EntLib5
         /// <returns></returns>
         public IDbConnection GetConnection()
         {
-            return servicioDatos.CreateConnection();
+            return _servicioDatos.CreateConnection();
         }
 
         #endregion
-
     }
 }

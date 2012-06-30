@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Configuration;
+using System.Diagnostics;
 using System.Reflection;
+using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.Persistence.Commons
 {
@@ -14,23 +16,12 @@ namespace Memento.Persistence.Commons
     [Serializable]
     public abstract class Entity : INotifyPropertyChanged
     {
-
         #region Atributos
 
         /// <summary>
-        /// Nombre de la tabla en BBDD
+        /// Propiedades privadas de la entidad
         /// </summary>
-        private string _table;
-
-        /// <summary>
-        /// Lista de propiedades que contienen una referencia hacía la entidad
-        /// </summary>
-        private List<string> _references;
-
-        /// <summary>
-        /// Lista de propiedades que contienen una dependecia de la entidad
-        /// </summary>
-        private List<string> _dependences;
+        private readonly IDictionary<string, object> _propValues;
 
         /// <summary>
         /// Booleano que informa si la entidad esta activa o no
@@ -38,24 +29,38 @@ namespace Memento.Persistence.Commons
         private bool _activo = true;
 
         /// <summary>
-        /// Lista de propiedades que contienen no son persistentes
+        /// Lista de propiedades que contienen una dependecia de la entidad
         /// </summary>
-        private List<string> _transientProps;
+        private List<string> _dependences;
 
         /// <summary>
         /// Indica si la entidad esta sincronizada con la BBDD
         /// </summary>
-        private bool _isDirty = false;
+        private bool _isDirty;
 
         /// <summary>
-        /// Propiedades privadas de la entidad
+        /// Lista de propiedades que contienen una referencia hacía la entidad
         /// </summary>
-        private IDictionary<string, object> _propValues;
+        private List<string> _references;
+
+        /// <summary>
+        /// Nombre de la tabla en BBDD
+        /// </summary>
+        private string _table;
+
+        /// <summary>
+        /// Lista de propiedades que contienen no son persistentes
+        /// </summary>
+        private List<string> _transientProps;
+
+        private IDictionary<string, string> _dependsConfig;
+
+        private string _primaryKeyName;
 
         #endregion
 
         #region Propiedades
-      
+
         /// <summary>
         /// Lista de propiedades que contienen una referencia hacía la entidad
         /// </summary>
@@ -120,37 +125,106 @@ namespace Memento.Persistence.Commons
         /// </summary>
         protected Entity()
         {
-            TransientProps = new List<string>(4);
+            TransientProps = new List<string>(6)
+                                 {
+                                     "TransientProps",
+                                     "Table",
+                                     "Dependences",
+                                     "References",
+                                     "IsDirty",
+                                     "PropertyChanged",
+                                 };
 
-            TransientProps.Add("TransientProps");
-            TransientProps.Add("Table");
-            TransientProps.Add("Dependences");
-            TransientProps.Add("References");
-            TransientProps.Add("IsDirty");
-            TransientProps.Add("PropertyChanged");
-            TransientProps.Add("_propValues");
 
-            NameValueCollection section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
+            foreach (object cAttribute in GetType().GetCustomAttributes(false))
+            {
+                if(cAttribute is Table)
+                {
+                    Table tAnnotation = cAttribute as Table;
 
-            string fullName = GetType().FullName;
-            if (fullName != null && section != null) Table = section[fullName];
+                    if(!string.IsNullOrEmpty(tAnnotation.Name))
+                    {
+                        Table = tAnnotation.Name;
+                    }
+                }
+            }
 
+            if(string.IsNullOrEmpty(Table))
+            {
+                var section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
+
+                string fullName = GetType().FullName;
+
+                if (fullName != null && section != null) Table = section[fullName];
+
+                if (string.IsNullOrEmpty(Table)) Table = GetType().Name;
+            }
+            
             References = new List<string>();
             Dependences = new List<string>();
 
             foreach (PropertyInfo prop in GetType().GetProperties())
             {
-                if(prop.PropertyType.BaseType == typeof(EaterEntity))
+                if (prop.PropertyType.BaseType == typeof (EaterEntity))
                 {
                     References.Add(prop.Name);
                 }
-                else if(prop.PropertyType.BaseType == typeof(LazyEntity))
+                else if (prop.PropertyType.BaseType == typeof (LazyEntity))
                 {
                     Dependences.Add(prop.Name);
                 }
             }
 
             _propValues = new Dictionary<string, object>(GetType().GetProperties().Length);
+
+            //Inicializamos las propiedades con atributos propios
+            InitializeCustomProps();
+        }
+
+        #endregion
+
+        #region Métodos Privados
+
+        private void InitializeCustomProps()
+        {
+            foreach (PropertyInfo propertyInfo in GetType().GetProperties())
+            {
+                if (propertyInfo.GetCustomAttributes(false).Length > 0)
+                {
+                    foreach (object cAttribute in propertyInfo.GetCustomAttributes(false))
+                    {
+                        if (cAttribute is Relation)
+                        {
+                            var attRelation = cAttribute as Relation;
+
+                            if (attRelation.Type != RelationType.Reference)
+                            {
+                                if(_dependsConfig == null) _dependsConfig = new Dictionary<string, string>();
+
+                                _dependsConfig.Add(propertyInfo.Name, attRelation.PropertyName);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private string GetPropertyName()
+        {
+            string res = null;
+
+            var stackTrace = new StackTrace();
+            StackFrame[] frames = stackTrace.GetFrames();
+
+            if (frames != null)
+            {
+                StackFrame thisFrame = frames[2];
+                MethodBase method = thisFrame.GetMethod();
+
+                if (method.Name.Length > 4) res = method.Name.Substring(4);
+            }
+
+            return res;
         }
 
         #endregion
@@ -163,7 +237,7 @@ namespace Memento.Persistence.Commons
         /// <returns></returns>
         public object GetEntityId()
         {
-            return GetType().GetProperty((GetType().Name + "Id")).GetValue(this, null);
+            return GetType().GetProperty(GetEntityIdName()).GetValue(this, null);
         }
 
         /// <summary>
@@ -172,14 +246,21 @@ namespace Memento.Persistence.Commons
         /// <returns></returns>
         public void SetEntityId(object id)
         {
-            GetType().GetProperty((GetType().Name + "Id")).SetValue(this, id, null);
+            Type tipoT = GetType();
+            Type tId = tipoT.GetProperty(GetEntityIdName()).PropertyType;
+
+            Type nullType = Nullable.GetUnderlyingType(tId);
+
+            object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
+
+            GetType().GetProperty(GetEntityIdName()).SetValue(this, nullValue, null);
         }
 
         /// <summary>
         /// Devuelve el nombre del identificador de la entidad
         /// </summary>
         /// <returns></returns>
-        public object GetEntityIdName()
+        public string GetEntityIdName()
         {
             return GetType().Name + "Id";
         }
@@ -196,35 +277,57 @@ namespace Memento.Persistence.Commons
         /// <summary>
         /// Método que establece las propiedades privadas de una entidad
         /// </summary>
-        /// <param name="info">Nombre de la propiedad</param>
         /// <param name="value">Valor</param>
-        protected void Set(String info, object value)
+        protected void Set(object value)
         {
-            object prop = _propValues.ContainsKey(info) ? _propValues[info] : null;
+            string info = GetPropertyName();
 
-            if (prop != value)
+            if (!string.IsNullOrEmpty(info))
             {
-                IsDirty = true;
-                _propValues[info] = value;
+                object prop = _propValues.ContainsKey(info) ? _propValues[info] : null;
 
-                if (PropertyChanged != null)
+                if (prop != value)
                 {
-                    PropertyChanged(this, new PropertyChangedEventArgs(info));
-                }    
+                    IsDirty = true;
+                    _propValues[info] = value;
+
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs(info));
+                    }
+                }
             }
         }
 
         /// <summary>
         /// Método que devuelve el valor de una propiedad privada de la entidad
         /// </summary>
+        /// <typeparam name=" T">Tipo de dato de la propiedad</typeparam>
         /// <typeparam name="T">Tipo de dato de la propiedad</typeparam>
-        /// <param name="info">Nombre de la propiedad</param>
         /// <returns></returns>
-        protected T Get<T>(String info)
+        protected T Get<T>()
         {
-            object prop = _propValues.ContainsKey(info) ? _propValues[info] : null;
+            object prop = null;
+            string info = GetPropertyName();
 
-            return (T)prop;
+            if (!string.IsNullOrEmpty(info))
+            {
+                prop = _propValues.ContainsKey(info) ? _propValues[info] : null;
+
+                if (prop == null && _dependsConfig != null && _dependsConfig.ContainsKey(info))
+                {
+                    prop = Activator.CreateInstance(
+                                            typeof(T), new object[]
+                                        {
+                                            _dependsConfig[info],
+                                            this
+                                        });
+
+                    _propValues[info] = prop;
+                }
+            }
+
+            return (T) prop;
         }
 
         #endregion

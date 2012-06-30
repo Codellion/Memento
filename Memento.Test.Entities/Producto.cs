@@ -1,33 +1,39 @@
-﻿using Memento.Persistence;
+﻿using System.Data;
+using Memento.Persistence;
 using Memento.Persistence.Commons;
+using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.Test.Entities
 {
     public class Producto : Entity
     {
+        [PrimaryKey(Generator = KeyGenerationType.Database)]
+        [Field(Name = "ProductoId")]
         public long? ProductoId
         {
-            set { Set("ProductoId", value); }
-            get { return Get<long?>("ProductoId"); }
+            set { Set(value); }
+            get { return Get<long?>(); }
         }
+
+        [Field]
         public string Nombre
         {
-            set { Set("Nombre", value); }
-            get { return Get<string>("Nombre"); }
+            set { Set(value); }
+            get { return Get<string>(); }
         }
 
-        private Dependences<Linea> _lineas;
+        [Relation("ProductoId", "Producto", RelationType.Dependences)]
         public Dependences<Linea> Lineas
         {
-            get { return _lineas ?? (_lineas = new Dependences<Linea>("Producto", this)); }
-            set { _lineas = value; }
+            set { Set(value); }
+            get { return Get<Dependences<Linea>>(); }
         }
 
-        private Dependences<ProductoProveedor> _proveedores;
+        [Relation("ProductoId", "Producto", RelationType.Dependences)]
         public Dependences<ProductoProveedor> Proveedores
         {
-            get { return _proveedores ?? (_proveedores = new Dependences<ProductoProveedor>("Producto", this)); }
-            set { _proveedores = value; }
+            set { Set(value); }
+            get { return Get<Dependences<ProductoProveedor>>(); }
         }
     }
 }

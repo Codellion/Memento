@@ -1,26 +1,33 @@
-﻿using Memento.Persistence;
+﻿using System.Data;
+using Memento.Persistence;
 using Memento.Persistence.Commons;
+using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.Test.Entities
 {
+    [Table(Name = "Cliente")]
     public class Cliente : Entity
     {
+        [PrimaryKey(Generator = KeyGenerationType.Database)]
+        [Field(Name = "ClienteId")]
         public int? ClienteId
         {
-            set { Set("ClienteId", value); }
-            get { return Get<int?>("ClienteId"); }
-        }
-        public string Nombre
-        {
-             set { Set("Nombre", value); }
-             get { return Get<string>("Nombre"); }
+            set { Set(value); }
+            get { return Get<int?>(); }
         }
 
-        private Dependences<Factura> _facturas;
+        [Field(Name = "Nombre", Required = true)]
+        public string Nombre
+        {
+            set { Set(value); }
+            get { return Get<string>(); }
+        }
+
+        [Relation("ClienteId", "Cliente", RelationType.Dependences)]
         public Dependences<Factura> Facturas
         {
-            get { return _facturas ?? (_facturas = new Dependences<Factura>("Cliente", this)); }
-            set { _facturas = value; }
+            set { Set(value); }
+            get { return Get<Dependences<Factura>>(); }
         }
     }
 }

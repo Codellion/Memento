@@ -7,8 +7,7 @@ namespace Memento.DataAccess.Interfaces
     /// <summary>
     /// Interfaz de acceso a la capa de datos del módulo de persistencia
     /// </summary>
-    /// <typeparam name="T">Tipo de la entidad con la que se va a operar</typeparam>
-    public interface IDataPersistence<out T>
+    public interface IDataPersistence
     {
         /// <summary>
         /// Método que persiste una entidad y la devuelve 

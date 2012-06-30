@@ -5,11 +5,9 @@ using System.Data;
 using System.Data.Common;
 using System.Data.OleDb;
 using System.Reflection;
-
 using Memento.DataAccess.Interfaces;
 using Memento.DataAccess.Utils;
 using Memento.Persistence.Commons;
-
 
 namespace Memento.DataAccess.OleDb
 {
@@ -18,9 +16,8 @@ namespace Memento.DataAccess.OleDb
     /// para ello se ha utilizado el servicio de acceso a BBDD de OleDb
     /// </summary>
     /// <typeparam name="T">Tipo de la entidad con la que se va operar</typeparam>
-    public class BdPersistence<T> : IDisposable, IDataPersistence<T> where T: Entity
+    public class BdPersistence<T> : IDisposable, IDataPersistence where T : Entity
     {
-
         #region Constantes
 
         /// <summary>
@@ -35,7 +32,7 @@ namespace Memento.DataAccess.OleDb
         /// <summary>
         /// Base datos sobre la que se opera
         /// </summary>
-        private IDbCommand servicioDatos;
+        private readonly IDbCommand _servicioDatos;
 
         #endregion
 
@@ -46,11 +43,10 @@ namespace Memento.DataAccess.OleDb
         /// </summary>
         public BdPersistence()
         {
-
             ConnectionStringSettings connstring = ConfigurationManager.ConnectionStrings[Entorno];
-            servicioDatos = new OleDbCommand(string.Empty, new OleDbConnection(connstring.ConnectionString));
+            _servicioDatos = new OleDbCommand(string.Empty, new OleDbConnection(connstring.ConnectionString));
 
-            servicioDatos.Connection.Open();
+            _servicioDatos.Connection.Open();
         }
 
         /// <summary>
@@ -58,11 +54,10 @@ namespace Memento.DataAccess.OleDb
         /// </summary>
         public BdPersistence(string entorno)
         {
-
             ConnectionStringSettings connstring = ConfigurationManager.ConnectionStrings[entorno];
-            servicioDatos = new OleDbCommand(string.Empty, new OleDbConnection(connstring.ConnectionString));
+            _servicioDatos = new OleDbCommand(string.Empty, new OleDbConnection(connstring.ConnectionString));
 
-            servicioDatos.Connection.Open();
+            _servicioDatos.Connection.Open();
         }
 
         /// <summary>
@@ -72,10 +67,9 @@ namespace Memento.DataAccess.OleDb
         /// <param name="transaccion">Transacción activa</param>
         public BdPersistence(IDbTransaction transaccion)
         {
-            servicioDatos = new OleDbCommand(string.Empty,
-                                             transaccion.Connection as OleDbConnection,
-                                             transaccion as OleDbTransaction);
-
+            _servicioDatos = new OleDbCommand(string.Empty,
+                                              transaccion.Connection as OleDbConnection,
+                                              transaccion as OleDbTransaction);
         }
 
         #endregion
@@ -90,27 +84,18 @@ namespace Memento.DataAccess.OleDb
         /// <returns>Identificador de la entidad persistida</returns>
         public object InsertEntity(Entity entidad)
         {
-            Query query = DbUtil<T>.GetInsert((T)entidad);
+            Query query = DbUtil<T>.GetInsert((T) entidad);
 
-            object id;
+            _servicioDatos.CommandText = query.ToInsert();
 
-            servicioDatos.CommandText = query.ToInsert();
-
-            id = servicioDatos.ExecuteScalar();
+            object id = _servicioDatos.ExecuteScalar();
 
             if (id == null)
             {
                 throw new Exception("Ocurrió un error desconocido al insertar el registro.");
             }
 
-            Type tipoT = typeof(T);
-            Type tId = tipoT.GetProperty(tipoT.Name + "Id").PropertyType;
-
-            Type nullType = Nullable.GetUnderlyingType(tId);
-
-            object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
-
-            return nullValue;
+            return id;
         }
 
         /// <summary>
@@ -119,11 +104,11 @@ namespace Memento.DataAccess.OleDb
         /// <param name="entidad">Entidad actualizada</param>
         public void UpdateEntity(Entity entidad)
         {
-            Query query = DbUtil<T>.GetUpdate((T)entidad);
+            Query query = DbUtil<T>.GetUpdate((T) entidad);
 
-            servicioDatos.CommandText = query.ToUpdate();
+            _servicioDatos.CommandText = query.ToUpdate();
 
-            servicioDatos.ExecuteNonQuery();
+            _servicioDatos.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -134,10 +119,9 @@ namespace Memento.DataAccess.OleDb
         {
             Query query = DbUtil<T>.GetDelete(entidadId);
 
-            servicioDatos.CommandText = query.ToDelete();
+            _servicioDatos.CommandText = query.ToDelete();
 
-            servicioDatos.ExecuteNonQuery();
-            
+            _servicioDatos.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -148,21 +132,14 @@ namespace Memento.DataAccess.OleDb
         /// <returns>Entidad que se recupera</returns>
         public IDataReader GetEntity(object entidadId)
         {
-            T aux = Activator.CreateInstance<T>();
-            Type gType = aux.GetType();
+            var aux = Activator.CreateInstance<T>();
 
-            PropertyInfo pPk = gType.GetProperty(gType.Name + "Id");
-
-            Type nullType = Nullable.GetUnderlyingType(pPk.PropertyType);
-            Object nullValue = nullType != null ? Convert.ChangeType(entidadId, nullType) : entidadId;
-
-            pPk.SetValue(aux, nullValue, null);
-
+            aux.SetEntityId(entidadId);
             Query query = DbUtil<T>.GetQuery(aux);
 
-            servicioDatos.CommandText = query.ToSelect();
+            _servicioDatos.CommandText = query.ToSelect();
 
-            return servicioDatos.ExecuteReader();
+            return _servicioDatos.ExecuteReader();
         }
 
         /// <summary>
@@ -171,13 +148,13 @@ namespace Memento.DataAccess.OleDb
         /// <returns>Entidades activas</returns>
         public IDataReader GetEntities()
         {
-            T aux = Activator.CreateInstance<T>();
+            var aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 
-            servicioDatos.CommandText = query.ToSelect();
+            _servicioDatos.CommandText = query.ToSelect();
 
-            return servicioDatos.ExecuteReader();
+            return _servicioDatos.ExecuteReader();
         }
 
         /// <summary>
@@ -188,11 +165,11 @@ namespace Memento.DataAccess.OleDb
         /// <returns>Entidades filtradas</returns>
         public IDataReader GetEntities(Entity entidadFiltro)
         {
-            Query query = DbUtil<T>.GetQuery((T)entidadFiltro);
+            Query query = DbUtil<T>.GetQuery((T) entidadFiltro);
 
-            servicioDatos.CommandText = query.ToSelect();
+            _servicioDatos.CommandText = query.ToSelect();
 
-            return servicioDatos.ExecuteReader();
+            return _servicioDatos.ExecuteReader();
         }
 
         /// <summary>
@@ -201,16 +178,16 @@ namespace Memento.DataAccess.OleDb
         /// <returns>DataSet con las entidades activas</returns>
         public DataSet GetEntitiesDs()
         {
-            T aux = Activator.CreateInstance<T>();
+            var aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 
-            OleDbDataAdapter adapter = new OleDbDataAdapter(query.ToSelect(), 
-                servicioDatos.Connection as OleDbConnection);
+            var adapter = new OleDbDataAdapter(query.ToSelect(),
+                                               _servicioDatos.Connection as OleDbConnection);
 
-            DataSet result = new DataSet();
+            var result = new DataSet();
             adapter.Fill(result, "result");
-            
+
             return result;
         }
 
@@ -222,12 +199,12 @@ namespace Memento.DataAccess.OleDb
         /// <returns>DataSet con las entidades filtradas</returns>
         public DataSet GetEntitiesDs(Entity entidadFiltro)
         {
-            Query query = DbUtil<T>.GetQuery((T)entidadFiltro);
+            Query query = DbUtil<T>.GetQuery((T) entidadFiltro);
 
-            OleDbDataAdapter adapter = new OleDbDataAdapter(query.ToSelect(),
-                servicioDatos.Connection as OleDbConnection);
+            var adapter = new OleDbDataAdapter(query.ToSelect(),
+                                               _servicioDatos.Connection as OleDbConnection);
 
-            DataSet result = new DataSet();
+            var result = new DataSet();
             adapter.Fill(result, "result");
 
             return result;
@@ -248,16 +225,16 @@ namespace Memento.DataAccess.OleDb
 
                 DbParameter param = new OleDbParameter(key, DbUtil<T>.GetDbType(valor.GetType()));
                 param.Value = valor;
-                
-                servicioDatos.Parameters.Add(param);
+
+                _servicioDatos.Parameters.Add(param);
             }
-            
-            servicioDatos.CommandType = CommandType.StoredProcedure;
-            servicioDatos.CommandText = storeProcedure;
-            
-            OleDbDataAdapter adapter = new OleDbDataAdapter(servicioDatos as OleDbCommand);
-            
-            DataSet result = new DataSet();
+
+            _servicioDatos.CommandType = CommandType.StoredProcedure;
+            _servicioDatos.CommandText = storeProcedure;
+
+            var adapter = new OleDbDataAdapter(_servicioDatos as OleDbCommand);
+
+            var result = new DataSet();
             adapter.Fill(result, "result");
 
             return result;
@@ -276,21 +253,25 @@ namespace Memento.DataAccess.OleDb
 
         #endregion
 
+        #region IDisposable Members
+
         /// <summary>
         /// Se utiliza el método Dispose del objeto para asegurarnos de cerrar la conexión
         /// en caso de estar aún abierta
         /// </summary>
         public void Dispose()
         {
-            if(servicioDatos !=null)
+            if (_servicioDatos != null)
             {
-                if(servicioDatos.Connection != null 
-                    && servicioDatos.Connection.State == ConnectionState.Open
-                    && servicioDatos.Transaction == null)
+                if (_servicioDatos.Connection != null
+                    && _servicioDatos.Connection.State == ConnectionState.Open
+                    && _servicioDatos.Transaction == null)
                 {
-                    servicioDatos.Connection.Close();
+                    _servicioDatos.Connection.Close();
                 }
             }
         }
+
+        #endregion
     }
 }

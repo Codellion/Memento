@@ -9,7 +9,7 @@ namespace Memento.Persistence.Interfaces
     /// Interfaz de operaciones del módulo de persistencia
     /// </summary>
     /// <typeparam name="T">Tipo de la Entidad sobre la que trabajará el módulo de persistencia</typeparam>
-    public interface IPersistence<T> where T: Entity
+    public interface IPersistence<T> where T : Entity
     {
         /// <summary>
         /// Método que persiste una T y la devuelve 
@@ -75,6 +75,5 @@ namespace Memento.Persistence.Interfaces
         /// <param name="procParams">Parametros necesitados por el procedimiento</param>
         /// <returns>Dataset con los resultados</returns>
         DataSet GetEntitiesDs(string storeProcedure, IDictionary<string, object> procParams);
-
     }
 }

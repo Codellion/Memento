@@ -37,6 +37,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Annotations\RelationType.cs" />
+    <Compile Include="Annotations\Relation.cs" />
+    <Compile Include="Annotations\KeyGenerationType.cs" />
+    <Compile Include="Annotations\PrimaryKey.cs" />
+    <Compile Include="Annotations\Field.cs" />
+    <Compile Include="Annotations\Table.cs" />
     <Compile Include="NmEntity.cs" />
     <Compile Include="EaterEntity.cs" />
     <Compile Include="Entity.cs" />

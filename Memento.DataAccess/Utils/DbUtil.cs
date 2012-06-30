@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Reflection;
-
 using Memento.Persistence.Commons;
 
 namespace Memento.DataAccess.Utils
 {
-    public class DbUtil<T> where T: Entity {
-
+    public class DbUtil<T> where T : Entity
+    {
         #region Constantes
 
         /// <summary>
@@ -20,7 +19,7 @@ namespace Memento.DataAccess.Utils
         #endregion
 
         #region Metodos privados
-        
+
         /// <summary>
         /// Devuelve el tipo de dato de SQL Server equivalente al del framework .Net
         /// </summary>
@@ -30,7 +29,7 @@ namespace Memento.DataAccess.Utils
         {
             return ConvertDbType.ToSqlDbType(tipo);
         }
-        
+
         /// <summary>
         /// Devuelve una lista de parámetros SQL con las propiedades de
         /// primer nivel que se persisten en una entidad
@@ -40,7 +39,7 @@ namespace Memento.DataAccess.Utils
         public static Query GetInsert(T entidad)
         {
             Type tipoEntidad = entidad.GetType();
-       
+
             //Establecemos las propiedades base que no se persisten
             IList<string> transientProps = entidad.TransientProps;
             transientProps.Add(tipoEntidad.Name + "Id");
@@ -95,23 +94,23 @@ namespace Memento.DataAccess.Utils
                             values.Add(String.Format(" {0} ",
                                                      ((bool) value) ? "1" : "0"));
                         }
-                        else if (persistProp.PropertyType == typeof(float)
-                             || persistProp.PropertyType == typeof(float?))
+                        else if (persistProp.PropertyType == typeof (float)
+                                 || persistProp.PropertyType == typeof (float?))
                         {
                             values.Add(String.Format(" {0} ",
                                                      value.ToString().Replace(",", ".")));
                         }
                         else
                         {
-                            values.Add(String.Format(" {0} ", value));}
-
+                            values.Add(String.Format(" {0} ", value));
+                        }
                     }
                 }
             }
 
-            Query res = new Query(GetSepList(cols, ","),
-                                  GetSepList(values, ","),
-                                  entidad.Table, null);
+            var res = new Query(GetSepList(cols, ","),
+                                GetSepList(values, ","),
+                                entidad.Table, null);
 
             return res;
         }
@@ -137,7 +136,7 @@ namespace Memento.DataAccess.Utils
             //Establecemos las propiedades base que no se persisten
             IList<string> transientProps = entidad.TransientProps;
             transientProps.Add(tipoEntidad.Name + "Id");
-            
+
             IList<string> cols = new List<string>();
 
             foreach (PropertyInfo persistProp in tipoEntidad.GetProperties())
@@ -161,7 +160,7 @@ namespace Memento.DataAccess.Utils
 
                             PropertyInfo pId = typRef.GetProperty(nomCol);
                             object valueAux = pId.GetValue(refValue, null);
-                            
+
                             if (valueAux == null)
                             {
                                 continue;
@@ -185,12 +184,12 @@ namespace Memento.DataAccess.Utils
                                                    nomCol,
                                                    ((bool) value) ? "1" : "0"));
                         }
-                        else if (persistProp.PropertyType == typeof(float)
-                         || persistProp.PropertyType == typeof(float?))
+                        else if (persistProp.PropertyType == typeof (float)
+                                 || persistProp.PropertyType == typeof (float?))
                         {
                             cols.Add(String.Format(" {0} = {1} ",
-                                                    nomCol,
-                                                    value.ToString().Replace(",", ".")));
+                                                   nomCol,
+                                                   value.ToString().Replace(",", ".")));
                         }
                         else
                         {
@@ -202,9 +201,9 @@ namespace Memento.DataAccess.Utils
                 }
             }
 
-            Query res = new Query(GetSepList(cols, ","),
-                                  entidad.Table,
-                                  String.Format(" {0}Id = {1}", tipoEntidad.Name, id));
+            var res = new Query(GetSepList(cols, ","),
+                                entidad.Table,
+                                String.Format(" {0}Id = {1}", tipoEntidad.Name, id));
 
             return res;
         }
@@ -214,9 +213,9 @@ namespace Memento.DataAccess.Utils
             Type tipoT = typeof (T);
             Type tId = tipoT.GetProperty(tipoT.Name + "Id").PropertyType;
 
-            object id = null;
+            object id;
 
-            if(entidadId is Entity)
+            if (entidadId is Entity)
             {
                 id = (entidadId as Entity).GetEntityId();
             }
@@ -224,29 +223,14 @@ namespace Memento.DataAccess.Utils
             {
                 id = entidadId;
             }
-                
 
-            string where;
 
-            if (tId == typeof (string))
-            {
-                where = String.Format(" {0}Id = '{1}' ",
-                                      tipoT.Name,
-                                      id);
-            }
-            else
-            {
-                where = String.Format(" {0}Id = {1} ",
-                                      tipoT.Name,
-                                      id);
-            }
+            string @where = String.Format(tId == typeof (string) ? " {0}Id = '{1}' " : " {0}Id = {1} ", tipoT.Name, id);
 
             PropertyInfo pTableName = tipoT.GetProperty("Table");
-            string sTableName = (string) pTableName.GetValue(Activator.CreateInstance<T>(), null);
+            var sTableName = (string) pTableName.GetValue(Activator.CreateInstance<T>(), null);
 
-            Query query = new Query();
-            query.Tables = sTableName;
-            query.Filters = where;
+            var query = new Query {Tables = sTableName, Filters = @where};
 
             return query;
         }
@@ -279,7 +263,6 @@ namespace Memento.DataAccess.Utils
 
                     count++;
                 }
-
             }
 
             return res;
@@ -294,14 +277,14 @@ namespace Memento.DataAccess.Utils
         public static Query GetQuery(T entidad)
         {
             Type tipoEntidad = entidad.GetType();
-      
+
             //Establecemos las propiedades base que no se persisten
             IList<string> transientProps = entidad.TransientProps;
 
             IList<string> colProps = new List<string>();
             IList<string> tableProps = new List<string>();
             IList<string> filtProps = new List<string>();
-            
+
             string sfrom = String.Format(" {0} {1} ",
                                          entidad.Table,
                                          "tableAux0");
@@ -309,7 +292,7 @@ namespace Memento.DataAccess.Utils
             tableProps.Add(sfrom);
 
             //Establecemos el alias
-            string alias = "tableAux";
+            const string alias = "tableAux";
             int i = 1;
 
             //Inspeccionamos cada propiedad de la entidad para construir las
@@ -322,7 +305,7 @@ namespace Memento.DataAccess.Utils
                 //ya que dicho tipo de dato ya se encarga automáticamente de realizar 
                 //sus consultas
                 if (transientProps.Contains(persistProp.Name)
-                    || persistProp.PropertyType.BaseType == typeof(LazyEntity))
+                    || persistProp.PropertyType.BaseType == typeof (LazyEntity))
                 {
                     continue;
                 }
@@ -366,8 +349,8 @@ namespace Memento.DataAccess.Utils
                                                         persistProp.Name,
                                                         ((bool) value) ? "1" : "0"));
                         }
-                        else if (persistProp.PropertyType == typeof(float)
-                                || persistProp.PropertyType == typeof(float?))
+                        else if (persistProp.PropertyType == typeof (float)
+                                 || persistProp.PropertyType == typeof (float?))
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                         "tableAux0",
@@ -395,7 +378,7 @@ namespace Memento.DataAccess.Utils
 
                         //Obtenemos el nombre de la tabla relacionada
                         PropertyInfo pTableNameAux = propertyType.GetProperty("Table");
-                        string sTableNameAux = (string) pTableNameAux.GetValue(aux, null);
+                        var sTableNameAux = (string) pTableNameAux.GetValue(aux, null);
 
                         //Añadimos el join
                         tableProps.Add(String.Format(" {0} {1} on {2}.{3}Id = {4}.{5}Id ",
@@ -457,7 +440,8 @@ namespace Memento.DataAccess.Utils
                 i++;
             }
 
-            return new Query(GetSepList(colProps, " , "), GetSepList(tableProps, " join "), GetSepList(filtProps, " and "));
+            return new Query(GetSepList(colProps, " , "), GetSepList(tableProps, " join "),
+                             GetSepList(filtProps, " and "));
         }
 
         /// <summary>
@@ -471,11 +455,12 @@ namespace Memento.DataAccess.Utils
         /// <param name="tableProps">Tablas</param>
         /// <param name="filtProps">Filtros</param>
         public static void SetFilters(String nivel, Entity entidad, PropertyInfo propEntidad, string actualAlias,
-                                      ref IList<string> colProps, ref IList<string> tableProps, ref IList<string> filtProps)
+                                      ref IList<string> colProps, ref IList<string> tableProps,
+                                      ref IList<string> filtProps)
         {
             Type tipoEntidad = propEntidad.PropertyType;
 
-            if (tipoEntidad.BaseType == typeof(EaterEntity))
+            if (tipoEntidad.BaseType == typeof (EaterEntity))
             {
                 tipoEntidad = propEntidad.PropertyType.GetGenericArguments()[0];
             }
@@ -485,7 +470,7 @@ namespace Memento.DataAccess.Utils
 
             PropertyInfo refsInfo = tipoEntidad.GetProperty("References");
 
-            IList<string> referencias = (IList<string>) refsInfo.GetValue(entidad, null);
+            var referencias = (IList<string>) refsInfo.GetValue(entidad, null);
 
             IList<string> transientProps = entidad.TransientProps;
 
@@ -494,7 +479,7 @@ namespace Memento.DataAccess.Utils
                 string aliasAux = alias + i;
 
                 if (transientProps.Contains(persistProp.Name)
-                    || persistProp.PropertyType.BaseType == typeof(LazyEntity))
+                    || persistProp.PropertyType.BaseType == typeof (LazyEntity))
                 {
                     continue;
                 }
@@ -538,8 +523,8 @@ namespace Memento.DataAccess.Utils
                                                         persistProp.Name,
                                                         ((bool) value) ? "1" : "0"));
                         }
-                        else if (persistProp.PropertyType == typeof(float)
-                                || persistProp.PropertyType == typeof(float?))
+                        else if (persistProp.PropertyType == typeof (float)
+                                 || persistProp.PropertyType == typeof (float?))
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                         actualAlias,
@@ -564,7 +549,7 @@ namespace Memento.DataAccess.Utils
                         Object aux = Activator.CreateInstance(propertyType);
 
                         PropertyInfo pTableNameAux = propertyType.GetProperty("Table");
-                        string sTableNameAux = (string) pTableNameAux.GetValue(aux, null);
+                        var sTableNameAux = (string) pTableNameAux.GetValue(aux, null);
 
                         if (!(aux is Entity))
                         {
@@ -629,5 +614,5 @@ namespace Memento.DataAccess.Utils
         }
 
         #endregion
-    }   
-}   
+    }
+}

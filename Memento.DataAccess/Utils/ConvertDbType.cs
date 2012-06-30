@@ -7,63 +7,47 @@ namespace Memento.DataAccess.Utils
     /// <summary>
     /// Convierte un tipo de BBDD a un tipo .Net y viceversa
     /// </summary>
-    public sealed class ConvertDbType
+    public static class ConvertDbType
     {
-        private struct DbTypeMapEntry
-        {
-            public Type Type;
-            public DbType DbType;
-            public SqlDbType SqlDbType;
-            public DbTypeMapEntry(Type type, DbType dbType, SqlDbType sqlDbType)
-            {
-                this.Type = type;
-                this.DbType = dbType;
-                this.SqlDbType = sqlDbType;
-            }
-        };
-
-        private static List<DbTypeMapEntry> _DbTypeList = new List<DbTypeMapEntry>();
+        private static readonly List<DbTypeMapEntry> DbTypeList = new List<DbTypeMapEntry>();
 
         #region Constructors
+
         static ConvertDbType()
         {
-            DbTypeMapEntry dbTypeMapEntry = new DbTypeMapEntry(typeof(bool), DbType.Boolean, SqlDbType.Bit);
-            _DbTypeList.Add(dbTypeMapEntry);
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(byte), DbType.Double, SqlDbType.TinyInt);
-            _DbTypeList.Add(dbTypeMapEntry);
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(byte[]), DbType.Binary, SqlDbType.Image);
-            _DbTypeList.Add(dbTypeMapEntry);
+            var dbTypeMapEntry = new DbTypeMapEntry(typeof (bool), DbType.Boolean, SqlDbType.Bit);
+            DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (byte), DbType.Double, SqlDbType.TinyInt);
+            DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (byte[]), DbType.Binary, SqlDbType.Image);
+            DbTypeList.Add(dbTypeMapEntry);
 
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(DateTime), DbType.DateTime, SqlDbType.DateTime);
-            _DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (DateTime), DbType.DateTime, SqlDbType.DateTime);
+            DbTypeList.Add(dbTypeMapEntry);
 
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(Decimal), DbType.Decimal, SqlDbType.Decimal);
-            _DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (Decimal), DbType.Decimal, SqlDbType.Decimal);
+            DbTypeList.Add(dbTypeMapEntry);
 
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(double), DbType.Double, SqlDbType.Float);
-            _DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (double), DbType.Double, SqlDbType.Float);
+            DbTypeList.Add(dbTypeMapEntry);
 
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(Guid), DbType.Guid, SqlDbType.UniqueIdentifier);
-            _DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (Guid), DbType.Guid, SqlDbType.UniqueIdentifier);
+            DbTypeList.Add(dbTypeMapEntry);
 
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(Int16), DbType.Int16, SqlDbType.SmallInt);
-            _DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (Int16), DbType.Int16, SqlDbType.SmallInt);
+            DbTypeList.Add(dbTypeMapEntry);
 
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(Int32), DbType.Int32, SqlDbType.Int);
-            _DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (Int32), DbType.Int32, SqlDbType.Int);
+            DbTypeList.Add(dbTypeMapEntry);
 
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(Int64), DbType.Int64, SqlDbType.BigInt);
-            _DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (Int64), DbType.Int64, SqlDbType.BigInt);
+            DbTypeList.Add(dbTypeMapEntry);
 
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(object), DbType.Object, SqlDbType.Variant);
-            _DbTypeList.Add(dbTypeMapEntry);
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (object), DbType.Object, SqlDbType.Variant);
+            DbTypeList.Add(dbTypeMapEntry);
 
-            dbTypeMapEntry = new DbTypeMapEntry(typeof(string), DbType.String, SqlDbType.VarChar);
-            _DbTypeList.Add(dbTypeMapEntry);
-        }
-
-        private ConvertDbType()
-        {
+            dbTypeMapEntry = new DbTypeMapEntry(typeof (string), DbType.String, SqlDbType.VarChar);
+            DbTypeList.Add(dbTypeMapEntry);
         }
 
         #endregion
@@ -80,6 +64,7 @@ namespace Memento.DataAccess.Utils
             DbTypeMapEntry entry = Find(dbType);
             return entry.Type;
         }
+
         /// <summary>
         /// Convert TSQL type to .Net data type
         /// </summary>
@@ -138,9 +123,9 @@ namespace Memento.DataAccess.Utils
         private static DbTypeMapEntry Find(Type type)
         {
             object retObj = null;
-            for (int i = 0; i < _DbTypeList.Count; i++)
+            for (int i = 0; i < DbTypeList.Count; i++)
             {
-                DbTypeMapEntry entry = _DbTypeList[i];
+                DbTypeMapEntry entry = DbTypeList[i];
                 if (entry.Type == type)
                 {
                     retObj = entry;
@@ -151,15 +136,15 @@ namespace Memento.DataAccess.Utils
             {
                 throw new ApplicationException("Referenced an unsupported Type");
             }
-            return (DbTypeMapEntry)retObj;
+            return (DbTypeMapEntry) retObj;
         }
 
         private static DbTypeMapEntry Find(DbType dbType)
         {
             object retObj = null;
-            for (int i = 0; i < _DbTypeList.Count; i++)
+            for (int i = 0; i < DbTypeList.Count; i++)
             {
-                DbTypeMapEntry entry = (DbTypeMapEntry)_DbTypeList[i];
+                DbTypeMapEntry entry = DbTypeList[i];
                 if (entry.DbType == dbType)
                 {
                     retObj = entry;
@@ -170,15 +155,15 @@ namespace Memento.DataAccess.Utils
             {
                 throw new ApplicationException("Referenced an unsupported DbType");
             }
-            return (DbTypeMapEntry)retObj;
+            return (DbTypeMapEntry) retObj;
         }
 
         private static DbTypeMapEntry Find(SqlDbType sqlDbType)
         {
             object retObj = null;
-            for (int i = 0; i < _DbTypeList.Count; i++)
+            for (int i = 0; i < DbTypeList.Count; i++)
             {
-                DbTypeMapEntry entry = (DbTypeMapEntry)_DbTypeList[i];
+                DbTypeMapEntry entry = DbTypeList[i];
                 if (entry.SqlDbType == sqlDbType)
                 {
                     retObj = entry;
@@ -190,8 +175,27 @@ namespace Memento.DataAccess.Utils
                 throw new ApplicationException("Referenced an unsupported SqlDbType");
             }
 
-            return (DbTypeMapEntry)retObj;
+            return (DbTypeMapEntry) retObj;
         }
+
+        #endregion
+
+        #region Nested type: DbTypeMapEntry
+
+        private struct DbTypeMapEntry
+        {
+            public readonly DbType DbType;
+            public readonly SqlDbType SqlDbType;
+            public readonly Type Type;
+
+            public DbTypeMapEntry(Type type, DbType dbType, SqlDbType sqlDbType)
+            {
+                Type = type;
+                DbType = dbType;
+                SqlDbType = sqlDbType;
+            }
+        };
+
         #endregion
     }
 }

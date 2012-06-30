@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
-
 using Memento.Persistence.Commons;
 using Memento.Persistence.Interfaces;
 
@@ -18,36 +17,9 @@ namespace Memento.Persistence
         #region Atributos
 
         /// <summary>
-        /// Atributo privado que sirve para almacenar los valores
-        /// de las dependencias
+        /// Lista original de las dependencias
         /// </summary>
-        private IList<T> _value;
-
-        /// <summary>
-        /// Nombre de la propiedad de la clase sobre la que tenemos
-        /// la dependencia
-        /// </summary>
-        private string _referenceName;
-
-        /// <summary>
-        /// Entidad que contiene las dependencias
-        /// </summary>
-        private Entity _entityRef;
-
-        /// <summary>
-        /// Indica si la lista de dependencias fue creado por el usuario y no traida desde la BBDD
-        /// </summary>
-        private bool _isDirty;
-
-        /// <summary>
-        /// Lista de dependencias a crear
-        /// </summary>
-        private IDictionary<int, object> _inserts;
-        
-        /// <summary>
-        /// Lista de dependencias a actualizar
-        /// </summary>
-        private IDictionary<int, object> _updates;
+        private List<T> _backup;
 
         /// <summary>
         /// Lista de dependencias a eliminar
@@ -55,9 +27,25 @@ namespace Memento.Persistence
         private IDictionary<int, object> _deletes;
 
         /// <summary>
-        /// Lista original de las dependencias
+        /// Lista de dependencias a crear
         /// </summary>
-        private List<T> _backup;
+        private IDictionary<int, object> _inserts;
+
+        /// <summary>
+        /// Indica si la lista de dependencias fue creado por el usuario y no traida desde la BBDD
+        /// </summary>
+        private bool _isDirty;
+
+        /// <summary>
+        /// Lista de dependencias a actualizar
+        /// </summary>
+        private IDictionary<int, object> _updates;
+
+        /// <summary>
+        /// Atributo privado que sirve para almacenar los valores
+        /// de las dependencias
+        /// </summary>
+        private IList<T> _value;
 
         #endregion
 
@@ -70,70 +58,58 @@ namespace Memento.Persistence
         {
             get
             {
-                try
+                if (_value == null)
                 {
-                    if (_value == null)
+                    IPersistence<T> servicioPers = new Persistence<T>();
+
+                    var aux = Activator.CreateInstance<T>();
+
+                    if (!string.IsNullOrEmpty(ReferenceName))
                     {
-                        IPersistence<T> servicioPers = new Persistence<T>();
+                        //Establecemos la relación entre ambas entidades
+                        PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
 
-                        T aux = Activator.CreateInstance<T>();
+                        object refAux = Activator.CreateInstance(prop.PropertyType);
+                        refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
 
-                        if (!string.IsNullOrEmpty(ReferenceName))
+                        prop.SetValue(aux, refAux, null);
+
+                        //Realizamos la busqueda de los datos relacionados
+                        IList<T> res = servicioPers.GetEntities(aux);
+
+                        if (res != null)
                         {
-                            //Establecemos la relación entre ambas entidades
-                            PropertyInfo prop = aux.GetType().GetProperty(ReferenceName);
+                            _backup = new List<T>(res);
 
-                            object refAux = Activator.CreateInstance(prop.PropertyType);
-                            refAux.GetType().GetProperty("Value").SetValue(refAux, EntityRef, null);
+                            _value = new BindingList<T>(res);
 
-                            prop.SetValue(aux, refAux, null);
-
-                            //Realizamos la busqueda de los datos relacionados
-                            IList<T> res = servicioPers.GetEntities(aux);
-
-                            if (res != null)
-                            {
-                                _backup = new List<T>(res);
-
-                                _value = new BindingList<T>(res);
-
-                                Initialize();
-                            }
-
-                            IsDirty = false;
+                            Initialize();
                         }
+
+                        IsDirty = false;
                     }
                 }
-                catch (Exception)
-                {
-                    //TODO Registrar error
-                }
-                
 
                 return _value;
             }
 
-            set { IsDirty = true; _value = value; }
+            set
+            {
+                IsDirty = true;
+                _value = value;
+            }
         }
 
         /// <summary>
         /// Entidad que contiene las dependencias
         /// </summary>
-        public Entity EntityRef
-        {
-            get { return _entityRef; }
-            set { _entityRef = value; }
-        }
+        public Entity EntityRef { get; set; }
 
         /// <summary>
         /// Nombre de la propiedad de la clase sobre la que tenemos
         /// la dependencia
         /// </summary>
-        public string ReferenceName
-        {
-            get { return _referenceName; }
-            set { _referenceName = value; }
-        }
+        public string ReferenceName { get; set; }
 
         /// <summary>
         /// Indica si la lista de dependencias fue creado por el usuario y no traida desde la BBDD
@@ -148,7 +124,7 @@ namespace Memento.Persistence
         /// Lista de dependencias a crear
         /// </summary>
         protected IList<T> Inserts
-        { 
+        {
             get
             {
                 IList<T> res = new List<T>();
@@ -191,7 +167,7 @@ namespace Memento.Persistence
 
                 foreach (int index in _deletes.Keys)
                 {
-                    T aux = Activator.CreateInstance<T>();
+                    var aux = Activator.CreateInstance<T>();
 
                     aux.SetEntityId(_deletes[index]);
 
@@ -205,7 +181,7 @@ namespace Memento.Persistence
         #endregion
 
         #region Constructores
-        
+
         /// <summary>
         /// Constructor donde se define la propiedad referenciada en la clase
         /// dependiente
@@ -242,7 +218,7 @@ namespace Memento.Persistence
 
             foreach (T entity in entities)
             {
-                Value.Add(entity);    
+                Value.Add(entity);
             }
         }
 
@@ -257,8 +233,8 @@ namespace Memento.Persistence
             Initialize();
 
             IsDirty = false;
-            _referenceName = refName;
-            _entityRef = entidad;
+            ReferenceName = refName;
+            EntityRef = entidad;
         }
 
         #endregion
@@ -331,7 +307,7 @@ namespace Memento.Persistence
         /// <returns></returns>
         public T CreateDependence()
         {
-            T aux = Activator.CreateInstance<T>();
+            var aux = Activator.CreateInstance<T>();
 
             if (!string.IsNullOrEmpty(ReferenceName))
             {
@@ -346,15 +322,15 @@ namespace Memento.Persistence
 
             return aux;
         }
-        
+
         /// <summary>
         /// Inicializa los parámetros básicos de las dependencias
         /// </summary>
         protected void Initialize()
         {
-            if(Value != null)
+            if (Value != null)
             {
-                ((BindingList<T>) Value).ListChanged += ValueOnListChanged; 
+                ((BindingList<T>) Value).ListChanged += ValueOnListChanged;
             }
 
             _inserts = new Dictionary<int, object>();
@@ -363,7 +339,5 @@ namespace Memento.Persistence
         }
 
         #endregion
-
-       
     }
 }
