@@ -4,6 +4,7 @@ using System.Data;
 using System.Globalization;
 using System.Reflection;
 using Memento.Persistence.Commons;
+using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.DataAccess.Utils
 {
@@ -42,7 +43,11 @@ namespace Memento.DataAccess.Utils
 
             //Establecemos las propiedades base que no se persisten
             IList<string> transientProps = entidad.TransientProps;
-            transientProps.Add(tipoEntidad.Name + "Id");
+
+            if(entidad.KeyGenerator == KeyGenerationType.Database)
+            {
+                transientProps.Add(entidad.GetEntityIdName());    
+            }
 
             IList<string> cols = new List<string>();
             IList<string> values = new List<string>();
@@ -60,14 +65,15 @@ namespace Memento.DataAccess.Utils
                         if (entidad.References.Contains(persistProp.Name))
                         {
                             //Comprobamos que si es una entidad referenciada esta contenga el id
+                            var refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null) as Entity;
 
-                            Type typRef = persistProp.PropertyType.GetGenericArguments()[0];
-                            nomCol = typRef.Name + "Id";
+                            if (refValue == null)
+                            {
+                                continue;
+                            }
 
-                            object refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null);
-
-                            PropertyInfo pId = typRef.GetProperty(nomCol);
-                            object valueAux = pId.GetValue(refValue, null);
+                            nomCol = refValue.GetEntityIdName();
+                            object valueAux = refValue.GetEntityId();
 
                             if (valueAux == null)
                             {
@@ -76,6 +82,8 @@ namespace Memento.DataAccess.Utils
 
                             value = valueAux;
                         }
+
+                        nomCol = entidad.GetMappedProp(nomCol);
 
                         cols.Add(nomCol);
 
@@ -125,8 +133,7 @@ namespace Memento.DataAccess.Utils
         {
             Type tipoEntidad = entidad.GetType();
 
-            PropertyInfo idInfo = tipoEntidad.GetProperty(tipoEntidad.Name + "Id");
-            object id = idInfo.GetValue(entidad, null);
+            object id = entidad.GetEntityId();
 
             if (id == null)
             {
@@ -135,7 +142,11 @@ namespace Memento.DataAccess.Utils
 
             //Establecemos las propiedades base que no se persisten
             IList<string> transientProps = entidad.TransientProps;
-            transientProps.Add(tipoEntidad.Name + "Id");
+
+            if (entidad.KeyGenerator == KeyGenerationType.Database)
+            {
+                transientProps.Add(entidad.GetEntityIdName());
+            }
 
             IList<string> cols = new List<string>();
 
@@ -152,14 +163,15 @@ namespace Memento.DataAccess.Utils
                         if (entidad.References.Contains(persistProp.Name))
                         {
                             //Comprobamos que si es una entidad referenciada esta contenga el id
+                            var refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null) as Entity;
 
-                            Type typRef = persistProp.PropertyType.GetGenericArguments()[0];
-                            nomCol = typRef.Name + "Id";
+                            if (refValue == null)
+                            {
+                                continue;
+                            }
 
-                            object refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null);
-
-                            PropertyInfo pId = typRef.GetProperty(nomCol);
-                            object valueAux = pId.GetValue(refValue, null);
+                            nomCol = refValue.GetEntityIdName();
+                            object valueAux = refValue.GetEntityId();
 
                             if (valueAux == null)
                             {
@@ -168,6 +180,8 @@ namespace Memento.DataAccess.Utils
 
                             value = valueAux;
                         }
+
+                        nomCol = entidad.GetMappedProp(nomCol);
 
                         if (persistProp.PropertyType == typeof (string)
                             || persistProp.PropertyType == typeof (DateTime)
@@ -210,9 +224,8 @@ namespace Memento.DataAccess.Utils
 
         public static Query GetDelete(object entidadId)
         {
-            Type tipoT = typeof (T);
-            Type tId = tipoT.GetProperty(tipoT.Name + "Id").PropertyType;
-
+            Entity auxT = Activator.CreateInstance<T>();
+            
             object id;
 
             if (entidadId is Entity)
@@ -224,13 +237,12 @@ namespace Memento.DataAccess.Utils
                 id = entidadId;
             }
 
+            Type tId = id.GetType();
 
-            string @where = String.Format(tId == typeof (string) ? " {0}Id = '{1}' " : " {0}Id = {1} ", tipoT.Name, id);
+            string @where = String.Format(tId == typeof (string) ? " {0} = '{1}' " : " {0} = {1} ",
+                auxT.GetMappedProp(auxT.GetEntityIdName()), id);
 
-            PropertyInfo pTableName = tipoT.GetProperty("Table");
-            var sTableName = (string) pTableName.GetValue(Activator.CreateInstance<T>(), null);
-
-            var query = new Query {Tables = sTableName, Filters = @where};
+            var query = new Query { Tables = auxT.Table, Filters = @where };
 
             return query;
         }
@@ -314,8 +326,10 @@ namespace Memento.DataAccess.Utils
 
                 if (!entidad.References.Contains(persistProp.Name))
                 {
+                    string propName = entidad.GetMappedProp(persistProp.Name);
+
                     //Añadimos la columna
-                    colProps.Add("tableAux0." + persistProp.Name);
+                    colProps.Add(string.Format("tableAux0.{0} [{1}]", propName, persistProp.Name));
 
                     //Si la propiedad contiene un valor lo incluimos como filtro
                     if (value != null)
@@ -330,14 +344,14 @@ namespace Memento.DataAccess.Utils
 
                                 filtProps.Add(String.Format(" {0}.{1} LIKE '{2}' ",
                                                             "tableAux0",
-                                                            persistProp.Name,
+                                                            propName,
                                                             value));
                             }
                             else
                             {
                                 filtProps.Add(String.Format(" {0}.{1} = '{2}' ",
                                                             "tableAux0",
-                                                            persistProp.Name,
+                                                            propName,
                                                             value));
                             }
                         }
@@ -346,7 +360,7 @@ namespace Memento.DataAccess.Utils
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                         "tableAux0",
-                                                        persistProp.Name,
+                                                        propName,
                                                         ((bool) value) ? "1" : "0"));
                         }
                         else if (persistProp.PropertyType == typeof (float)
@@ -354,14 +368,14 @@ namespace Memento.DataAccess.Utils
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                         "tableAux0",
-                                                        persistProp.Name,
+                                                        propName,
                                                         value.ToString().Replace(",", ".")));
                         }
                         else
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                         "tableAux0",
-                                                        persistProp.Name,
+                                                        propName,
                                                         value));
                         }
                     }
@@ -374,65 +388,73 @@ namespace Memento.DataAccess.Utils
                     {
                         Type propertyType = persistProp.PropertyType.GetGenericArguments()[0];
 
-                        Object aux = Activator.CreateInstance(propertyType);
+                        var aux = Activator.CreateInstance(propertyType) as Entity;
+
+                        if(aux == null)
+                        {
+                            continue;
+                        }
 
                         //Obtenemos el nombre de la tabla relacionada
-                        PropertyInfo pTableNameAux = propertyType.GetProperty("Table");
-                        var sTableNameAux = (string) pTableNameAux.GetValue(aux, null);
+                        var sTableNameAux = aux.Table;
+
+                        string idCol = aux.GetMappedProp(aux.GetEntityIdName());
 
                         //Añadimos el join
-                        tableProps.Add(String.Format(" {0} {1} on {2}.{3}Id = {4}.{5}Id ",
+                        tableProps.Add(String.Format(" {0} {1} on {2}.{3} = {4}.{5} ",
                                                      sTableNameAux,
                                                      aliasAux,
                                                      aliasAux,
-                                                     propertyType.Name,
+                                                     idCol,
                                                      "tableAux0",
-                                                     propertyType.Name));
+                                                     idCol));
 
                         if (value != null)
                         {
                             value = value.GetType().GetProperty("Value").GetValue(value, null);
 
-                            //Si la propiedad contiene un valor lo utilizamos como filtro de la Query                           
+                            var eValue = value as Entity;
 
-                            PropertyInfo pRefId = propertyType.GetProperty(propertyType.Name + "Id");
-                            Object refId = pRefId.GetValue(value, null);
+                            if(eValue == null)
+                            {
+                                continue;
+                            }
+
+                            //Si la propiedad contiene un valor lo utilizamos como filtro de la Query                           
+                            Object refId = eValue.GetEntityId();
 
                             if (refId != null)
                             {
-                                if (pRefId.PropertyType == typeof (string))
+                                Type pRefId = refId.GetType();
+                                string idColFilter = eValue.GetMappedProp(eValue.GetEntityIdName());
+
+                                if (pRefId == typeof (string))
                                 {
-                                    filtProps.Add(String.Format(" {0}.{1}Id = '{2}' ",
+                                    filtProps.Add(String.Format(" {0}.{1} = '{2}' ",
                                                                 aliasAux,
-                                                                propertyType.Name,
+                                                                idColFilter,
                                                                 refId));
                                 }
                                 else
                                 {
-                                    filtProps.Add(String.Format(" {0}.{1}Id = {2} ",
+                                    filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                                 aliasAux,
-                                                                propertyType.Name,
+                                                                idColFilter,
                                                                 refId));
                                 }
                             }
 
                             //Si la propiedad es una Entidad a su vez de inspeccion internamente
                             //para satisfacer sus referencias internas
-                            if (value is Entity)
-                            {
-                                SetFilters(persistProp.Name, value as Entity, persistProp, aliasAux,
-                                           ref colProps, ref tableProps, ref filtProps);
-                            }
+                            SetFilters(persistProp.Name, eValue, persistProp, aliasAux,
+                                        ref colProps, ref tableProps, ref filtProps);
                         }
                         else
                         {
                             //Si la propiedad es una Entidad a su vez de inspeccion internamente
                             //para satisfacer sus referencias internas
-                            if (aux is Entity)
-                            {
-                                SetFilters(persistProp.Name, aux as Entity, persistProp, aliasAux,
-                                           ref colProps, ref tableProps, ref filtProps);
-                            }
+                            SetFilters(persistProp.Name, aux, persistProp, aliasAux,
+                                        ref colProps, ref tableProps, ref filtProps);
                         }
                     }
                 }
@@ -468,9 +490,7 @@ namespace Memento.DataAccess.Utils
             string alias = actualAlias + "_";
             int i = 0;
 
-            PropertyInfo refsInfo = tipoEntidad.GetProperty("References");
-
-            var referencias = (IList<string>) refsInfo.GetValue(entidad, null);
+            var referencias = entidad.References;
 
             IList<string> transientProps = entidad.TransientProps;
 
@@ -486,10 +506,12 @@ namespace Memento.DataAccess.Utils
 
                 Object value = persistProp.GetValue(entidad, null);
 
+                string colNom = entidad.GetMappedProp(persistProp.Name);
+
                 if (!referencias.Contains(persistProp.Name))
                 {
                     colProps.Add(String.Format("{0}.{1} [{2}.{3}]",
-                                               actualAlias, persistProp.Name,
+                                               actualAlias, colNom,
                                                nivel, persistProp.Name));
 
                     if (value != null)
@@ -504,14 +526,14 @@ namespace Memento.DataAccess.Utils
 
                                 filtProps.Add(String.Format(" {0}.{1} LIKE '{2}' ",
                                                             actualAlias,
-                                                            persistProp.Name,
+                                                            colNom,
                                                             value));
                             }
                             else
                             {
                                 filtProps.Add(String.Format(" {0}.{1} = '{2}' ",
                                                             actualAlias,
-                                                            persistProp.Name,
+                                                            colNom,
                                                             value));
                             }
                         }
@@ -520,7 +542,7 @@ namespace Memento.DataAccess.Utils
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                         actualAlias,
-                                                        persistProp.Name,
+                                                        colNom,
                                                         ((bool) value) ? "1" : "0"));
                         }
                         else if (persistProp.PropertyType == typeof (float)
@@ -528,14 +550,14 @@ namespace Memento.DataAccess.Utils
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                         actualAlias,
-                                                        persistProp.Name,
+                                                        colNom,
                                                         value.ToString().Replace(",", ".")));
                         }
                         else
                         {
                             filtProps.Add(String.Format(" {0}.{1} = {2} ",
                                                         actualAlias,
-                                                        persistProp.Name,
+                                                        colNom,
                                                         value.ToString().ToString(CultureInfo.InvariantCulture)));
                         }
                     }
@@ -546,65 +568,61 @@ namespace Memento.DataAccess.Utils
                     {
                         Type propertyType = persistProp.PropertyType.GetGenericArguments()[0];
 
-                        Object aux = Activator.CreateInstance(propertyType);
+                        var aux = Activator.CreateInstance(propertyType) as Entity;
 
-                        PropertyInfo pTableNameAux = propertyType.GetProperty("Table");
-                        var sTableNameAux = (string) pTableNameAux.GetValue(aux, null);
-
-                        if (!(aux is Entity))
+                        if (aux != null)
                         {
-                            colProps.Add(String.Format("{0}.{1} [{2}.{3}]",
-                                                       actualAlias, persistProp.Name,
-                                                       nivel, persistProp.Name));
-                        }
+                            var sTableNameAux = aux.Table;
+                            var idCol = aux.GetMappedProp(aux.GetEntityIdName());
 
-                        tableProps.Add(String.Format(" {0} {1} on {2}.{3}Id = {4}.{5}Id ",
-                                                     sTableNameAux,
-                                                     aliasAux,
-                                                     aliasAux,
-                                                     propertyType.Name,
-                                                     actualAlias,
-                                                     propertyType.Name));
+                            tableProps.Add(String.Format(" {0} {1} on {2}.{3} = {4}.{5} ",
+                                                         sTableNameAux,
+                                                         aliasAux,
+                                                         aliasAux,
+                                                         idCol,
+                                                         actualAlias,
+                                                         idCol));
+                        }
 
                         if (value != null)
                         {
                             value = value.GetType().GetProperty("Value").GetValue(value, null);
 
-                            PropertyInfo pRefId = propertyType.GetProperty(propertyType.Name + "Id");
-                            Object refId = pRefId.GetValue(value, null);
+                            var eValue = value as Entity;
 
-                            if (refId != null)
+                            if (eValue != null)
                             {
-                                if (pRefId.PropertyType == typeof (string))
+                                Object refId = eValue.GetEntityId();
+
+                                if (refId != null)
                                 {
-                                    filtProps.Add(String.Format(" {0}.{1}Id = '{2}' ",
-                                                                aliasAux,
-                                                                propertyType.Name,
-                                                                refId));
-                                }
-                                else
-                                {
-                                    filtProps.Add(String.Format(" {0}.{1}Id = {2} ",
-                                                                aliasAux,
-                                                                propertyType.Name,
-                                                                refId));
+                                    if (refId is string)
+                                    {
+                                        filtProps.Add(String.Format(" {0}.{1} = '{2}' ",
+                                                                    aliasAux,
+                                                                    eValue.GetMappedProp(eValue.GetEntityIdName()),
+                                                                    refId));
+                                    }
+                                    else
+                                    {
+                                        filtProps.Add(String.Format(" {0}.{1}Id = {2} ",
+                                                                    aliasAux,
+                                                                    eValue.GetMappedProp(eValue.GetEntityIdName()),
+                                                                    refId));
+                                    }
                                 }
                             }
-                            if (value is Entity)
-                            {
-                                SetFilters(String.Format("{0}.{1}", nivel, persistProp.Name),
-                                           value as Entity, persistProp, aliasAux,
-                                           ref colProps, ref tableProps, ref filtProps);
-                            }
+
+                            SetFilters(String.Format("{0}.{1}", nivel, persistProp.Name),
+                                        eValue, persistProp, aliasAux,
+                                        ref colProps, ref tableProps, ref filtProps);
                         }
                         else
                         {
-                            if (aux is Entity)
-                            {
-                                SetFilters(String.Format("{0}.{1}", nivel, persistProp.Name),
-                                           aux as Entity, persistProp, aliasAux,
-                                           ref colProps, ref tableProps, ref filtProps);
-                            }
+                           
+                            SetFilters(String.Format("{0}.{1}", nivel, persistProp.Name),
+                                        aux, persistProp, aliasAux,
+                                        ref colProps, ref tableProps, ref filtProps);
                         }
                     }
                 }

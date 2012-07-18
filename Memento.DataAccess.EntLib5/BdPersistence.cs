@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
-using System.Reflection;
 using Memento.DataAccess.Interfaces;
 using Memento.DataAccess.Utils;
 using Memento.Persistence.Commons;

@@ -4,7 +4,6 @@ using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Data.OleDb;
-using System.Reflection;
 using Memento.DataAccess.Interfaces;
 using Memento.DataAccess.Utils;
 using Memento.Persistence.Commons;

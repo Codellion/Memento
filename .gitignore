@@ -1,0 +1,4 @@
+# git ignore file
+/_ReSharper.Memento
+*/bin
+*/obj

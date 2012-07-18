@@ -53,9 +53,22 @@ namespace Memento.Persistence.Commons
         /// </summary>
         private List<string> _transientProps;
 
+        /// <summary>
+        /// Atributos de las relaciones de la entidad
+        /// </summary>
         private IDictionary<string, string> _dependsConfig;
 
+        /// <summary>
+        /// Nombre del campo que contiene la clave de la entidad
+        /// </summary>
         private string _primaryKeyName;
+
+        /// <summary>
+        /// Estrategia usada para generar la clave de la entidad
+        /// </summary>
+        private KeyGenerationType _keyGenerator;
+
+        private IDictionary<string, string> _fieldsMap;
 
         #endregion
 
@@ -115,6 +128,15 @@ namespace Memento.Persistence.Commons
             set { _isDirty = value; }
         }
 
+        /// <summary>
+        /// Estrategia usada para generar la clave de la entidad
+        /// </summary>
+        public KeyGenerationType KeyGenerator
+        {
+            get { return _keyGenerator; }
+            set { _keyGenerator = value; }
+        }
+
         #endregion
 
         #region Constructores
@@ -125,6 +147,9 @@ namespace Memento.Persistence.Commons
         /// </summary>
         protected Entity()
         {
+            _primaryKeyName = string.Empty;
+            _fieldsMap = new Dictionary<string, string>();
+
             TransientProps = new List<string>(6)
                                  {
                                      "TransientProps",
@@ -133,6 +158,8 @@ namespace Memento.Persistence.Commons
                                      "References",
                                      "IsDirty",
                                      "PropertyChanged",
+                                     "KeyGenerator",
+                                     "FieldsMap"
                                  };
 
 
@@ -140,7 +167,7 @@ namespace Memento.Persistence.Commons
             {
                 if(cAttribute is Table)
                 {
-                    Table tAnnotation = cAttribute as Table;
+                    var tAnnotation = cAttribute as Table;
 
                     if(!string.IsNullOrEmpty(tAnnotation.Name))
                     {
@@ -203,6 +230,20 @@ namespace Memento.Persistence.Commons
 
                                 _dependsConfig.Add(propertyInfo.Name, attRelation.PropertyName);
                             }
+                        }else if(cAttribute is PrimaryKey)
+                        {
+                            var prk = cAttribute as PrimaryKey;
+
+                            _primaryKeyName = propertyInfo.Name;
+                            _keyGenerator = prk.Generator;
+                        }else if(cAttribute is Field)
+                        {
+                            var propField = cAttribute as Field;
+
+                            if(!string.IsNullOrEmpty(propField.Name))
+                            {
+                                _fieldsMap[propertyInfo.Name] = propField.Name;    
+                            }
                         }
                     }
                 }
@@ -262,6 +303,11 @@ namespace Memento.Persistence.Commons
         /// <returns></returns>
         public string GetEntityIdName()
         {
+            if(!string.IsNullOrEmpty(_primaryKeyName))
+            {
+                return _primaryKeyName;
+            }
+
             return GetType().Name + "Id";
         }
 
@@ -316,8 +362,8 @@ namespace Memento.Persistence.Commons
 
                 if (prop == null && _dependsConfig != null && _dependsConfig.ContainsKey(info))
                 {
-                    prop = Activator.CreateInstance(
-                                            typeof(T), new object[]
+                    prop = Activator.CreateInstance(typeof(T), 
+                                        new object[]
                                         {
                                             _dependsConfig[info],
                                             this
@@ -328,6 +374,21 @@ namespace Memento.Persistence.Commons
             }
 
             return (T) prop;
+        }
+
+        /// <summary>
+        /// Método que devuelve el mapeo de la propiedad con la BBDD
+        /// </summary>
+        /// <param name="propName">Nombre de la propiedad</param>
+        /// <returns>Columna que mapea la propiedad</returns>
+        public string GetMappedProp(string propName)
+        {
+            if(_fieldsMap.ContainsKey(propName))
+            {
+                return _fieldsMap[propName];
+            }
+
+            return propName;
         }
 
         #endregion
