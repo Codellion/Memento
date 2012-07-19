@@ -10,7 +10,7 @@ namespace Memento.DataAccess
     /// <summary>
     /// Factoria de acceso a datos del módulo de persistencia
     /// </summary>
-    public class DataFactoryProvider
+    public static class DataFactoryProvider
     {
         /// <summary>
         /// Devuelve una implementación del interfaz de acceso a datos

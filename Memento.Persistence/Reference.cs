@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using Memento.Persistence.Commons;
 
 namespace Memento.Persistence

@@ -16,22 +16,22 @@ namespace Memento.DataAccess.Utils
         /// <summary>
         /// Columnas de la query
         /// </summary>
-        public string Cols { get; set; }
+        private string Cols { get; set; }
 
         /// <summary>
         /// Tablas de la query
         /// </summary>
-        public string Tables { get; set; }
+        public string Tables { private get; set; }
 
         /// <summary>
         /// Clausulas del where
         /// </summary>
-        public string Filters { get; set; }
+        public string Filters { private get; set; }
 
         /// <summary>
         /// Valores en un insert o update
         /// </summary>
-        public string Values { get; set; }
+        private string Values { get; set; }
 
         #endregion
 

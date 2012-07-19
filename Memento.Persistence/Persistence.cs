@@ -20,7 +20,7 @@ namespace Memento.Persistence
         /// <summary>
         /// Prefijo que llevan las propiedades que queremos filtrar con LIKE en lugar de =
         /// </summary>
-        public const string PrefixLike = "#like#";
+        private const string PrefixLike = "#like#";
 
         #endregion
 
@@ -42,7 +42,7 @@ namespace Memento.Persistence
         /// se llama al Proveedor de servicio de persistencia para que 
         /// devuelva una implementación de dicha interfaz
         /// </summary>
-        public IDataPersistence PersistenceService
+        private IDataPersistence PersistenceService
         {
             get
             {

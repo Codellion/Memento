@@ -22,12 +22,12 @@ namespace Memento.Persistence
         /// <summary>
         /// Base de datos utilizada en la transacción
         /// </summary>
-        public IDbConnection Connection { get; set; }
+        private IDbConnection Connection { get; set; }
 
         /// <summary>
         /// Transacción en curso
         /// </summary>
-        public IDbTransaction Transaction { get; set; }
+        public IDbTransaction Transaction { get; private set; }
 
         #endregion
 

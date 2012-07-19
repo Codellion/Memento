@@ -68,7 +68,10 @@ namespace Memento.Persistence.Commons
         /// </summary>
         private KeyGenerationType _keyGenerator;
 
-        private IDictionary<string, string> _fieldsMap;
+        /// <summary>
+        /// Mapeo de propiedades
+        /// </summary>
+        private readonly IDictionary<string, string> _fieldsMap;
 
         #endregion
 

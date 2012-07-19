@@ -1,5 +1,4 @@
-﻿using System.Data;
-using Memento.Persistence;
+﻿using Memento.Persistence;
 using Memento.Persistence.Commons;
 using Memento.Persistence.Commons.Annotations;
 

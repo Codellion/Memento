@@ -326,7 +326,7 @@ namespace Memento.Persistence
         /// <summary>
         /// Inicializa los parámetros básicos de las dependencias
         /// </summary>
-        protected void Initialize()
+        private void Initialize()
         {
             if (Value != null)
             {

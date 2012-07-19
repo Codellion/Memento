@@ -8,14 +8,14 @@ using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.DataAccess.Utils
 {
-    public class DbUtil<T> where T : Entity
+    public static class DbUtil<T> where T : Entity
     {
         #region Constantes
 
         /// <summary>
         /// Prefijo que llevan las propiedades que queremos filtrar con LIKE en lugar de =
         /// </summary>
-        public const string PrefixLike = "#like#";
+        private const string PrefixLike = "#like#";
 
         #endregion
 
@@ -254,7 +254,7 @@ namespace Memento.DataAccess.Utils
         /// <param name="lista">Lista de elementos</param>
         /// <param name="sep">Separador</param>
         /// <returns>Cadena con los elementos separados</returns>
-        public static string GetSepList(IList<string> lista, String sep)
+        private static string GetSepList(IList<string> lista, String sep)
         {
             string res = String.Empty;
 
@@ -476,7 +476,7 @@ namespace Memento.DataAccess.Utils
         /// <param name="colProps">Columnas</param>
         /// <param name="tableProps">Tablas</param>
         /// <param name="filtProps">Filtros</param>
-        public static void SetFilters(String nivel, Entity entidad, PropertyInfo propEntidad, string actualAlias,
+        private static void SetFilters(String nivel, Entity entidad, PropertyInfo propEntidad, string actualAlias,
                                       ref IList<string> colProps, ref IList<string> tableProps,
                                       ref IList<string> filtProps)
         {

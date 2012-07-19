@@ -21,7 +21,7 @@ namespace Memento.DataAccess.EntLib2
         /// <summary>
         /// Entorno de la arquitectura sobre la que se va a operar
         /// </summary>
-        public const string Entorno = "MEMENTO";
+        private const string Entorno = "MEMENTO";
 
         #endregion
 
