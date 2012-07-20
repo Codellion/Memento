@@ -210,6 +210,22 @@ namespace Memento.Test.App
                 provsLapiz.Add(newProdProv);
 
                 servProd.PersistEntity(lapiz);
+
+
+                IPersistence<TipoFactura> tipoFactServ = new Persistence<TipoFactura>();
+
+                var tipo1 = new TipoFactura {Descripcion = "Tipo factura 1"};
+
+                tipoFactServ.PersistEntity(tipo1);
+
+                IPersistence<TipoCliente> tipoClienteServ = new Persistence<TipoCliente>();
+
+                var tipoC1 = new TipoCliente { Descripcion = "Tipo cliente 1" };
+
+                tipoClienteServ.PersistEntity(tipoC1);
+
+
+
             }
             catch (Exception ex)
             {

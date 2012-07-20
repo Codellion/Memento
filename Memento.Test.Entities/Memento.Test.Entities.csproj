@@ -38,6 +38,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cliente.cs" />
+    <Compile Include="TipoCliente.cs" />
+    <Compile Include="TipoFactura.cs" />
     <Compile Include="ProductoProveedor.cs" />
     <Compile Include="Proveedor.cs" />
     <Compile Include="DetalleLinea.cs" />

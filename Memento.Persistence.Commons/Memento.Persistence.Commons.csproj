@@ -43,6 +43,9 @@
     <Compile Include="Annotations\PrimaryKey.cs" />
     <Compile Include="Annotations\Field.cs" />
     <Compile Include="Annotations\Table.cs" />
+    <Compile Include="Keygen\Vault.cs" />
+    <Compile Include="Keygen\KeyGeneration.cs" />
+    <Compile Include="Keygen\KeyVault.cs" />
     <Compile Include="NmEntity.cs" />
     <Compile Include="EaterEntity.cs" />
     <Compile Include="Entity.cs" />

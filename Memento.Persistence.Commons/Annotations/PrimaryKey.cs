@@ -6,5 +6,6 @@ namespace Memento.Persistence.Commons.Annotations
     public class PrimaryKey : Attribute
     {
         public KeyGenerationType Generator = KeyGenerationType.Memento;
+        public int Length;
     }
 }

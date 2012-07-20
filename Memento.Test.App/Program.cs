@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using Memento.Persistence.Commons.Keygen;
 
 namespace Memento.Test.App
 {
@@ -11,9 +12,20 @@ namespace Memento.Test.App
         [STAThread]
         private static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Entities());
+            try
+            {
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new Entities());    
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                KeyGeneration.Synchronize();
+            }
         }
     }
 }

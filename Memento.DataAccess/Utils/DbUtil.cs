@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Reflection;
 using Memento.Persistence.Commons;
 using Memento.Persistence.Commons.Annotations;
+using Memento.Persistence.Commons.Keygen;
 
 namespace Memento.DataAccess.Utils
 {
@@ -47,6 +48,10 @@ namespace Memento.DataAccess.Utils
             if(entidad.KeyGenerator == KeyGenerationType.Database)
             {
                 transientProps.Add(entidad.GetEntityIdName());    
+            }
+            else if(entidad.KeyGenerator == KeyGenerationType.Memento)
+            {
+                entidad.SetEntityId(KeyGeneration.GetPrimaryKey(entidad));
             }
 
             IList<string> cols = new List<string>();

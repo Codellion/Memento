@@ -507,7 +507,10 @@ namespace Memento.Persistence
         {
             object id = PersistenceService.InsertEntity(entity);
 
-            entity.SetEntityId(id);
+            if(entity.GetEntityId() == null)
+            {
+                entity.SetEntityId(id);    
+            }
 
             return entity;
         }
