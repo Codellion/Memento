@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.Configuration;
 using System.Data;
 using System.Reflection;
@@ -25,8 +26,15 @@ namespace Memento.DataAccess
 
             if (IsEntity(typeof (T)))
             {
-                string proveedorPers = ConfigurationManager.AppSettings["proveedorPersistencia"];
-                string assemblyPers = ConfigurationManager.AppSettings["emsambladoProveedorPersistencia"];
+                var providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
+
+                if(providerConfig == null)
+                {
+                    throw new Exception("Error in app.config, you must set a provider config");
+                }
+
+                string proveedorPers = providerConfig["persistenceProvider"];
+                string assemblyPers = providerConfig["assemblyPersistenceProvider"];
 
                 Type tProveedor = null;
 
@@ -65,8 +73,15 @@ namespace Memento.DataAccess
 
         public static IDbConnection GetConnection<T>(string entornoBd)
         {
-            string proveedorPers = ConfigurationManager.AppSettings["proveedorPersistencia"];
-            string assemblyPers = ConfigurationManager.AppSettings["emsambladoProveedorPersistencia"];
+            var providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
+
+            if (providerConfig == null)
+            {
+                throw new Exception("Error in app.config, you must set a provider config");
+            }
+
+            string proveedorPers = providerConfig["persistenceProvider"];
+            string assemblyPers = providerConfig["assemblyPersistenceProvider"];
 
             Type tProveedor = null;
 

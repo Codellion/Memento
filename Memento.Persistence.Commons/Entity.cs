@@ -181,7 +181,7 @@ namespace Memento.Persistence.Commons
 
             if(string.IsNullOrEmpty(Table))
             {
-                var section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
+                var section = ConfigurationManager.GetSection("memento/persistenceEntities") as NameValueCollection;
 
                 string fullName = GetType().FullName;
 

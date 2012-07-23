@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Specialized;
+using System.Configuration;
 using Memento.Persistence.Commons;
 using Memento.Persistence.Commons.Annotations;
 
@@ -111,7 +113,16 @@ namespace Memento.DataAccess.Utils
 
             if (TypeKeyGen == KeyGenerationType.Database)
             {
-                sInsert += "SELECT  @@IDENTITY AS ID; ";
+                var providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
+
+                if (providerConfig == null)
+                {
+                    throw new Exception("Error in app.config, you must set a provider config");
+                }
+
+                string pKdbComand = providerConfig["databaseKeyCommand"];
+
+                sInsert += pKdbComand;
             }
 
             return  sInsert;
