@@ -66,7 +66,7 @@ namespace Memento.Persistence.Commons
         /// <summary>
         /// Estrategia usada para generar la clave de la entidad
         /// </summary>
-        private KeyGenerationType _keyGenerator;
+        private KeyGenerationType _keyGenerator = KeyGenerationType.Memento;
 
         /// <summary>
         /// Mapeo de propiedades

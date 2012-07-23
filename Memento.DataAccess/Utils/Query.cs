@@ -1,4 +1,6 @@
 ﻿using System;
+using Memento.Persistence.Commons;
+using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.DataAccess.Utils
 {
@@ -32,6 +34,11 @@ namespace Memento.DataAccess.Utils
         /// Valores en un insert o update
         /// </summary>
         private string Values { get; set; }
+
+        /// <summary>
+        /// Tipo de clave
+        /// </summary>
+        public KeyGenerationType TypeKeyGen { get; set; }
 
         #endregion
 
@@ -100,8 +107,14 @@ namespace Memento.DataAccess.Utils
 
         public string ToInsert()
         {
-            return String.Format(" INSERT INTO {0} ({1}) VALUES ({2}) ; SELECT  @@IDENTITY AS ID;",
-                                 Tables, Cols, Values);
+            string sInsert = String.Format(" INSERT INTO {0} ({1}) VALUES ({2}); ", Tables, Cols, Values);
+
+            if (TypeKeyGen == KeyGenerationType.Database)
+            {
+                sInsert += "SELECT  @@IDENTITY AS ID; ";
+            }
+
+            return  sInsert;
         }
 
         public string ToUpdate()

@@ -121,10 +121,9 @@ namespace Memento.DataAccess.Utils
                 }
             }
 
-            var res = new Query(GetSepList(cols, ","),
-                                GetSepList(values, ","),
-                                entidad.Table, null);
-
+            var res = new Query(GetSepList(cols, ","), GetSepList(values, ","), entidad.Table, null) 
+                {TypeKeyGen = entidad.KeyGenerator};
+            
             return res;
         }
 

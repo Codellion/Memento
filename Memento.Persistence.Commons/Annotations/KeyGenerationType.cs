@@ -11,7 +11,8 @@
         Memento,
 
         /// <summary>
-        /// La base de datos se encarga de gestionar la generación de la clave (Identities...)
+        /// La base de datos se encarga de gestionar la generación de la clave 
+        /// (Por el momento sólo los campos de tipo Identity de SQL Server)
         /// </summary>
         Database,
 
