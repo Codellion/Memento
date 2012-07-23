@@ -1,5 +1,8 @@
 ﻿namespace Memento.Persistence.Commons.Annotations
 {
+    /// <summary>
+    /// Enumerado que representa el tipo de generación de claves para una entidad
+    /// </summary>
     public enum KeyGenerationType
     {
         /// <summary>

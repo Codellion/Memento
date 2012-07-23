@@ -21,7 +21,7 @@ namespace Memento.Test.Entities
             get { return Get<string>(); }
         }
 
-        [Relation("LineaId", "DetalleLinea", RelationType.Reference)]
+        [Relation("DetalleLinea", RelationType.Reference)]
         public Reference<Linea> Linea { set; get; }
     }
 }

@@ -28,13 +28,13 @@ namespace Memento.Test.Entities
             get { return Get<int?>(); }
         }
 
-        [Relation("ProductoId", "Lineas", RelationType.Reference)]
+        [Relation("Lineas", RelationType.Reference)]
         public Reference<Producto> Producto { set; get; }
 
-        [Relation("FacturaId", "Lineas", RelationType.Reference)]
+        [Relation("Lineas", RelationType.Reference)]
         public Reference<Factura> Factura { set; get; }
 
-        [Relation("LineaId", "Linea", RelationType.Dependence)]
+        [Relation("Linea", RelationType.Dependence)]
         public Dependence<DetalleLinea> DetalleLinea
         {
             set { Set(value); }

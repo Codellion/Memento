@@ -22,7 +22,7 @@ namespace Memento.Test.Entities
             get { return Get<string>(); }
         }
 
-        [Relation("ClienteId", "Cliente", RelationType.Dependences)]
+        [Relation("Cliente", RelationType.Dependences)]
         public Dependences<Factura> Facturas
         {
             set { Set(value); }

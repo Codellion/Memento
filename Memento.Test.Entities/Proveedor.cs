@@ -35,7 +35,7 @@ namespace Memento.Test.Entities
             get { return Get<string>(); }
         }
 
-        [Relation("ProveedorId", "Proveedor", RelationType.Dependences)]
+        [Relation("Proveedor", RelationType.Dependences)]
         public Dependences<ProductoProveedor> Productos
         {
             set { Set(value); }

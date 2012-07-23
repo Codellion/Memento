@@ -21,10 +21,10 @@ namespace Memento.Test.Entities
             get { return Get<float?>(); }
         }
 
-        [Relation("ProductoId", "Proveedores", RelationType.Reference)]
+        [Relation("Proveedores", RelationType.Reference)]
         public Reference<Producto> Producto { set; get; }
 
-        [Relation("ProveedorId", "Productos", RelationType.Reference)]
+        [Relation("Productos", RelationType.Reference)]
         public Reference<Proveedor> Proveedor { set; get; }
     }
 }

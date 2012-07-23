@@ -21,14 +21,14 @@ namespace Memento.Test.Entities
             get { return Get<string>(); }
         }
 
-        [Relation("ProductoId", "Producto", RelationType.Dependences)]
+        [Relation("Producto", RelationType.Dependences)]
         public Dependences<Linea> Lineas
         {
             set { Set(value); }
             get { return Get<Dependences<Linea>>(); }
         }
 
-        [Relation("ProductoId", "Producto", RelationType.Dependences)]
+        [Relation("Producto", RelationType.Dependences)]
         public Dependences<ProductoProveedor> Proveedores
         {
             set { Set(value); }

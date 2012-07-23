@@ -3,11 +3,27 @@ using System.Xml.Serialization;
 
 namespace Memento.Persistence.Commons.Keygen
 {
+    /// <summary>
+    /// Clase encargada de gestionar la claves primarias en Memento
+    /// </summary>
     public static class KeyGeneration
     {
+
+        #region Atributos
+
+        /// <summary>
+        /// Booleano que indica si el baúl de claves está sincronizado
+        /// </summary>
         private static bool _isSynchronize;
+
+        /// <summary>
+        /// Baúl de claves
+        /// </summary>
         private static Vault _vault;
 
+        /// <summary>
+        /// Baúl de claves
+        /// </summary>
         static Vault Vault
         {
             get
@@ -35,12 +51,29 @@ namespace Memento.Persistence.Commons.Keygen
             }
         }
 
+        #endregion
+
+        #region Enumerados
+
+        /// <summary>
+        /// Tipo de la clave a generar
+        /// </summary>
         enum PassType
         {
             Numeric,
             Hexadecimal
         }
-      
+
+        #endregion
+
+        #region Métodos Privados
+
+        /// <summary>
+        /// Método que devuelve el tipo de clave a generar según el tipo de la entidad
+        /// </summary>
+        /// <typeparam name="T">Tipo de la entidad</typeparam>
+        /// <param name="entity">Entidad</param>
+        /// <returns>Tipo de clave a generar</returns>
         static PassType GetPassType<T>(T entity) where T: Entity
         {
             PassType pType = PassType.Numeric;
@@ -53,6 +86,11 @@ namespace Memento.Persistence.Commons.Keygen
             return pType;
         }
 
+        /// <summary>
+        /// Método que devuelve la siguiente clave numérica asociada a la clase
+        /// </summary>
+        /// <typeparam name="T">Tipo de la entidad</typeparam>
+        /// <returns>Siguiente clave numérica</returns>
         static long GetNumericKey<T>()
         {
             long res;
@@ -78,6 +116,11 @@ namespace Memento.Persistence.Commons.Keygen
             return res;
         }
 
+        /// <summary>
+        /// Método que devuelve la siguiente clave hexadecimal asociada a la clase
+        /// </summary>
+        /// <typeparam name="T">Tipo de la entidad</typeparam>
+        /// <returns>Siguiente clave hexadecimal</returns>
         static string GetHexKey<T>()
         {
             string res;
@@ -104,7 +147,14 @@ namespace Memento.Persistence.Commons.Keygen
 
             return res;
         }
-        
+
+        #endregion
+
+        #region Métodos Públicos
+
+        /// <summary>
+        /// Método que se encarga de sincronizar el baúl de claves
+        /// </summary>
         public static void Synchronize()
         {
             if(!_isSynchronize)
@@ -121,6 +171,12 @@ namespace Memento.Persistence.Commons.Keygen
             }
         }
 
+        /// <summary>
+        /// Método que devuelve la siguiente clave asociada al tipo de la entidad
+        /// </summary>
+        /// <typeparam name="T">Tipo de la entidad</typeparam>
+        /// <param name="entity">Entidad</param>
+        /// <returns>Siguiente clave única</returns>
         public static object GetPrimaryKey<T>(T entity) where T : Entity
         {
             object res = null;
@@ -144,5 +200,7 @@ namespace Memento.Persistence.Commons.Keygen
 
             return res;
         }
+
+        #endregion
     }
 }
