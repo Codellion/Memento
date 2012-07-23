@@ -110,6 +110,14 @@ namespace Memento.Test.App
 
         private void button3_Click(object sender, EventArgs e)
         {
+            using (var context = new DataContext())
+            {
+                var servFac22 = context.CreatePersistenceService<Factura>() as IPersistence<Factura>;
+
+                context.SaveChanges();
+            }
+
+
             var cli = new Cliente();
             cli.Nombre = "test";
             //IPersistence<Linea> pers = new Persistence<Linea>();

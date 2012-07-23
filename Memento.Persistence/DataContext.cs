@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using Memento.DataAccess;
 using Memento.Persistence.Commons;
+using Memento.Persistence.Interfaces;
 
 namespace Memento.Persistence
 {
@@ -101,6 +102,20 @@ namespace Memento.Persistence
             }
 
             Connection.Close();
+        }
+
+        /// <summary>
+        /// Crea un servicio de persistencia para las entidades de tipo T dentro
+        /// del contexto actual
+        /// </summary>
+        /// <typeparam name="T">Tipo de entidad</typeparam>
+        /// <returns>Servicio de persistencia para T</returns>
+        public object CreatePersistenceService<T>()
+        {
+            Type tSerPers = typeof(Persistence<>);
+            tSerPers = tSerPers.MakeGenericType(typeof (T));
+
+            return  Activator.CreateInstance(tSerPers, this) as object;
         }
 
         #endregion

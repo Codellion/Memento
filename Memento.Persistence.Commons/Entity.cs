@@ -247,6 +247,9 @@ namespace Memento.Persistence.Commons
                             {
                                 _fieldsMap[propertyInfo.Name] = propField.Name;    
                             }
+                        }else if(cAttribute is Transient)
+                        {   
+                            TransientProps.Add(propertyInfo.Name);
                         }
                     }
                 }
