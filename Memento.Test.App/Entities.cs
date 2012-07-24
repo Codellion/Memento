@@ -19,7 +19,7 @@ namespace Memento.Test.App
 
         private void Entities_Load(object sender, EventArgs e)
         {
-            var section = ConfigurationManager.GetSection("PersistenceEntities") as NameValueCollection;
+            var section = ConfigurationManager.GetSection("memento/persistenceEntities") as NameValueCollection;
 
             cmbEntidades.Items.Clear();
 

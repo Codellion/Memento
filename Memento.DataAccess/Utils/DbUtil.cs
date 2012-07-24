@@ -221,7 +221,7 @@ namespace Memento.DataAccess.Utils
 
             var res = new Query(GetSepList(cols, ","),
                                 entidad.Table,
-                                String.Format(" {0}Id = {1}", tipoEntidad.Name, id));
+                                String.Format(" {0} = {1}", entidad.GetMappedProp(entidad.GetEntityIdName()), id));
 
             return res;
         }

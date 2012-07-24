@@ -109,7 +109,12 @@ namespace Memento.DataAccess.Utils
 
         public string ToInsert()
         {
-            string sInsert = String.Format(" INSERT INTO {0} ({1}) VALUES ({2}); ", Tables, Cols, Values);
+            return String.Format(" INSERT INTO {0} ({1}) VALUES ({2}); ", Tables, Cols, Values);
+        }
+
+        public string ToSelectLastId()
+        {
+            string selectId = string.Empty;
 
             if (TypeKeyGen == KeyGenerationType.Database)
             {
@@ -122,10 +127,10 @@ namespace Memento.DataAccess.Utils
 
                 string pKdbComand = providerConfig["databaseKeyCommand"];
 
-                sInsert += pKdbComand;
+                selectId += pKdbComand;
             }
 
-            return  sInsert;
+            return selectId;
         }
 
         public string ToUpdate()

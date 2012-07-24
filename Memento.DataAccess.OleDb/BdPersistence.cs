@@ -7,6 +7,7 @@ using System.Data.OleDb;
 using Memento.DataAccess.Interfaces;
 using Memento.DataAccess.Utils;
 using Memento.Persistence.Commons;
+using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.DataAccess.OleDb
 {
@@ -86,8 +87,19 @@ namespace Memento.DataAccess.OleDb
             Query query = DbUtil<T>.GetInsert((T) entidad);
 
             _servicioDatos.CommandText = query.ToInsert();
+            _servicioDatos.ExecuteNonQuery();
 
-            object id = _servicioDatos.ExecuteScalar();
+            object id = null;
+
+            if (entidad.KeyGenerator == KeyGenerationType.Database)
+            {
+                _servicioDatos.CommandText = query.ToSelectLastId();
+                id = _servicioDatos.ExecuteScalar();
+            }
+            else
+            {
+                id = entidad.GetEntityId();
+            }
 
             if (id == null)
             {

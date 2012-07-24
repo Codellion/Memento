@@ -5,6 +5,7 @@ using System.Data.Common;
 using Memento.DataAccess.Interfaces;
 using Memento.DataAccess.Utils;
 using Memento.Persistence.Commons;
+using Memento.Persistence.Commons.Annotations;
 using Microsoft.Practices.EnterpriseLibrary.Data;
 
 namespace Memento.DataAccess.EntLib2
@@ -94,9 +95,27 @@ namespace Memento.DataAccess.EntLib2
         {
             Query query = DbUtil<T>.GetInsert((T) entidad);
 
-            object id = _transaccion != null
-                            ? _servicioDatos.ExecuteScalar(_transaccion, CommandType.Text, query.ToInsert())
-                            : _servicioDatos.ExecuteScalar(CommandType.Text, query.ToInsert());
+            if(_transaccion != null)
+            {
+                _servicioDatos.ExecuteNonQuery(_transaccion, CommandType.Text, query.ToInsert());
+            }
+            else
+            {
+                _servicioDatos.ExecuteNonQuery(CommandType.Text, query.ToInsert());
+            }
+
+            object id = null;
+
+            if(entidad.KeyGenerator == KeyGenerationType.Database)
+            {
+                id = _transaccion != null 
+                    ? _servicioDatos.ExecuteScalar(_transaccion, CommandType.Text, query.ToSelectLastId()) 
+                    : _servicioDatos.ExecuteScalar(CommandType.Text, query.ToSelectLastId());
+            }
+            else
+            {
+                id = entidad.GetEntityId();
+            }
 
             if (id == null)
             {

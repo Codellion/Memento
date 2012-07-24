@@ -14,7 +14,7 @@ namespace Memento.Persistence.Commons.Keygen
         /// <summary>
         /// Booleano que indica si el baúl de claves está sincronizado
         /// </summary>
-        private static bool _isSynchronize;
+        private static bool _isSynchronize = true;
 
         /// <summary>
         /// Baúl de claves
@@ -159,9 +159,9 @@ namespace Memento.Persistence.Commons.Keygen
         {
             if(!_isSynchronize)
             {
-                Stream data = new FileStream("Vault.keys", FileMode.Create);
-
                 Vault.PrepareSerialize();
+
+                Stream data = new FileStream("Vault.keys", FileMode.Create);
 
                 var marshall = new XmlSerializer(typeof(Vault));
 
