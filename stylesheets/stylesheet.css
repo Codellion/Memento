@@ -292,6 +292,18 @@ Full-Width Styles
   border-bottom-right-radius: 2px;
 }
 
+#mpf_logo {
+  display: block;
+  position: absolute;
+  height: 150px;
+  width: 150px;
+  top: 30px;
+  left: -210px;
+  z-index: 10;
+  padding: 10px 50px 10px 10px;
+  background: url('../images/mpf_logo.png') no-repeat 95% 50%;
+}
+
 #header_wrap {
   background: #212121;
   background: -moz-linear-gradient(top, #373737, #212121);
@@ -331,8 +343,10 @@ Full-Width Styles
   background: url('../images/icon_download.png') no-repeat 0% 90%;
 }
 
-.label_download_link  .inner{
-  float: right;
+.label_download_link {
+  position: relative;
+  max-width: 640px;
+  margin: 8px Auto;
   right: 100px;
 }
 
