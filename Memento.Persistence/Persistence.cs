@@ -119,7 +119,7 @@ namespace Memento.Persistence
                         ManageDependence(entity, id, _context);
                     }
 
-                    Type tipoEntidad = typeof (T);
+                    Type tipoEntidad = entity.GetType();
 
                     PropertyInfo propId = tipoEntidad.GetProperty(entity.GetEntityIdName());
                     Type nullType = Nullable.GetUnderlyingType(propId.PropertyType);
@@ -614,7 +614,7 @@ namespace Memento.Persistence
         /// /// <param name="dtContext">Contexto de persistencia</param>
         private void ManageDependence(T entity, object entityId, DataContext dtContext)
         {
-            Type tipoEntidad = typeof (T);
+            Type tipoEntidad = entity.GetType();
 
             foreach (string propDepName in entity.Dependences)
             {
@@ -655,7 +655,7 @@ namespace Memento.Persistence
                         {
                             Type tReference = typeof (Reference<>);
                             tReference =
-                                tReference.MakeGenericType(typeof (T));
+                                tReference.MakeGenericType(tipoEntidad);
 
                             refEntity = Activator.CreateInstance(tReference,
                                                                  new object[] {Activator.CreateInstance<T>()});
@@ -748,8 +748,6 @@ namespace Memento.Persistence
                                    DataContext dtContext = null)
         {
             object entityId = entity.GetEntityId();
-
-            Type tipoEntidad = typeof (T);
             Type tPersServ = pService.GetType();
 
             MethodInfo persistEntity = tPersServ.GetMethod(persistMethod);
