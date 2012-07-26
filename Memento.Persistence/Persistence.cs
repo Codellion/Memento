@@ -781,8 +781,8 @@ namespace Memento.Persistence
                     }
 
                     //Actualizamos la referencia de la entidad padre recien creada
-
-                    PropertyInfo refEntityProp = currentDepValue.GetType().GetProperty(tipoEntidad.Name);
+                    var refName = (string) value.GetType().GetProperty("ReferenceName").GetValue(value, null);
+                    PropertyInfo refEntityProp = currentDepValue.GetType().GetProperty(refName);
 
                     object refEntity = refEntityProp.GetValue(currentDepValue, null);
 
