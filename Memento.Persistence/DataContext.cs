@@ -110,12 +110,12 @@ namespace Memento.Persistence
         /// </summary>
         /// <typeparam name="T">Tipo de entidad</typeparam>
         /// <returns>Servicio de persistencia para T</returns>
-        public object CreatePersistenceService<T>()
+        public IPersistence<T> CreatePersistenceService<T>() where T: Entity
         {
             Type tSerPers = typeof(Persistence<>);
             tSerPers = tSerPers.MakeGenericType(typeof (T));
 
-            return  Activator.CreateInstance(tSerPers, this) as object;
+            return Activator.CreateInstance(tSerPers, this) as IPersistence<T>;
         }
 
         #endregion

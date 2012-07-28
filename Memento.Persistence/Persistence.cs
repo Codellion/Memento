@@ -335,6 +335,19 @@ namespace Memento.Persistence
             return PersistenceService.GetEntitiesDs(storeProcedure, procParams);
         }
 
+        /// <summary>
+        /// Crea un servicio de persistencia para las entidades de tipo T
+        /// </summary>
+        /// <typeparam name="T">Tipo de entidad</typeparam>
+        /// <returns>Servicio de persistencia para T</returns>
+        public static IPersistence<T> CreatePersistenceService()
+        {
+            Type tSerPers = typeof(Persistence<>);
+            tSerPers = tSerPers.MakeGenericType(typeof(T));
+
+            return Activator.CreateInstance(tSerPers) as IPersistence<T>;
+        }
+
         #endregion
 
         #region Métodos privados
