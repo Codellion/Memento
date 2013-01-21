@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Xml.Serialization;
 
 namespace Memento.Persistence.Commons.Annotations
 {
     /// <summary>
     /// Anotación que representa la relación entre 2 o más entidades
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Property)]    
     public class Relation : Attribute
     {
         /// <summary>

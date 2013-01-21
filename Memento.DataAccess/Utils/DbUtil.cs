@@ -70,7 +70,7 @@ namespace Memento.DataAccess.Utils
                         if (entidad.References.Contains(persistProp.Name))
                         {
                             //Comprobamos que si es una entidad referenciada esta contenga el id
-                            var refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null) as Entity;
+                            Entity refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null) as Entity;
 
                             if (refValue == null)
                             {
@@ -121,7 +121,7 @@ namespace Memento.DataAccess.Utils
                 }
             }
 
-            var res = new Query(GetSepList(cols, ","), GetSepList(values, ","), entidad.Table, null) 
+            Query res = new Query(GetSepList(cols, ","), GetSepList(values, ","), entidad.Table, null) 
                 {TypeKeyGen = entidad.KeyGenerator};
             
             return res;
@@ -167,7 +167,7 @@ namespace Memento.DataAccess.Utils
                         if (entidad.References.Contains(persistProp.Name))
                         {
                             //Comprobamos que si es una entidad referenciada esta contenga el id
-                            var refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null) as Entity;
+                            Entity refValue = persistProp.PropertyType.GetProperty("Value").GetValue(value, null) as Entity;
 
                             if (refValue == null)
                             {
@@ -219,7 +219,7 @@ namespace Memento.DataAccess.Utils
                 }
             }
 
-            var res = new Query(GetSepList(cols, ","),
+            Query res = new Query(GetSepList(cols, ","),
                                 entidad.Table,
                                 String.Format(" {0} = {1}", entidad.GetMappedProp(entidad.GetEntityIdName()), id));
 
@@ -246,7 +246,7 @@ namespace Memento.DataAccess.Utils
             string @where = String.Format(tId == typeof (string) ? " {0} = '{1}' " : " {0} = {1} ",
                 auxT.GetMappedProp(auxT.GetEntityIdName()), id);
 
-            var query = new Query { Tables = auxT.Table, Filters = @where };
+            Query query = new Query { Tables = auxT.Table, Filters = @where };
 
             return query;
         }
@@ -392,7 +392,7 @@ namespace Memento.DataAccess.Utils
                     {
                         Type propertyType = persistProp.PropertyType.GetGenericArguments()[0];
 
-                        var aux = Activator.CreateInstance(propertyType) as Entity;
+                        Entity aux = Activator.CreateInstance(propertyType) as Entity;
 
                         if(aux == null)
                         {
@@ -400,7 +400,7 @@ namespace Memento.DataAccess.Utils
                         }
 
                         //Obtenemos el nombre de la tabla relacionada
-                        var sTableNameAux = aux.Table;
+                        string sTableNameAux = aux.Table;
 
                         string idCol = aux.GetMappedProp(aux.GetEntityIdName());
 
@@ -417,7 +417,7 @@ namespace Memento.DataAccess.Utils
                         {
                             value = value.GetType().GetProperty("Value").GetValue(value, null);
 
-                            var eValue = value as Entity;
+                            Entity eValue = value as Entity;
 
                             if(eValue == null)
                             {
@@ -494,7 +494,7 @@ namespace Memento.DataAccess.Utils
             string alias = actualAlias + "_";
             int i = 0;
 
-            var referencias = entidad.References;
+            List<string> referencias = entidad.References;
 
             IList<string> transientProps = entidad.TransientProps;
 
@@ -572,12 +572,12 @@ namespace Memento.DataAccess.Utils
                     {
                         Type propertyType = persistProp.PropertyType.GetGenericArguments()[0];
 
-                        var aux = Activator.CreateInstance(propertyType) as Entity;
+                        Entity aux = Activator.CreateInstance(propertyType) as Entity;
 
                         if (aux != null)
                         {
-                            var sTableNameAux = aux.Table;
-                            var idCol = aux.GetMappedProp(aux.GetEntityIdName());
+                            string sTableNameAux = aux.Table;
+                            string idCol = aux.GetMappedProp(aux.GetEntityIdName());
 
                             tableProps.Add(String.Format(" {0} {1} on {2}.{3} = {4}.{5} ",
                                                          sTableNameAux,
@@ -592,7 +592,7 @@ namespace Memento.DataAccess.Utils
                         {
                             value = value.GetType().GetProperty("Value").GetValue(value, null);
 
-                            var eValue = value as Entity;
+                            Entity eValue = value as Entity;
 
                             if (eValue != null)
                             {
@@ -600,20 +600,10 @@ namespace Memento.DataAccess.Utils
 
                                 if (refId != null)
                                 {
-                                    if (refId is string)
-                                    {
-                                        filtProps.Add(String.Format(" {0}.{1} = '{2}' ",
-                                                                    aliasAux,
-                                                                    eValue.GetMappedProp(eValue.GetEntityIdName()),
-                                                                    refId));
-                                    }
-                                    else
-                                    {
-                                        filtProps.Add(String.Format(" {0}.{1}Id = {2} ",
-                                                                    aliasAux,
-                                                                    eValue.GetMappedProp(eValue.GetEntityIdName()),
-                                                                    refId));
-                                    }
+                                    filtProps.Add(String.Format(" {0}.{1} = '{2}' ",
+                                                                aliasAux,
+                                                                eValue.GetMappedProp(eValue.GetEntityIdName()),
+                                                                refId));
                                 }
                             }
 

@@ -118,7 +118,7 @@ namespace Memento.DataAccess.Utils
 
             if (TypeKeyGen == KeyGenerationType.Database)
             {
-                var providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
+                NameValueCollection providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
 
                 if (providerConfig == null)
                 {

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.Reflection;
+using System.Xml.Serialization;
 using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.Persistence.Commons
@@ -170,7 +171,7 @@ namespace Memento.Persistence.Commons
             {
                 if(cAttribute is Table)
                 {
-                    var tAnnotation = cAttribute as Table;
+                    Table tAnnotation = cAttribute as Table;
 
                     if(!string.IsNullOrEmpty(tAnnotation.Name))
                     {
@@ -181,7 +182,7 @@ namespace Memento.Persistence.Commons
 
             if(string.IsNullOrEmpty(Table))
             {
-                var section = ConfigurationManager.GetSection("memento/persistenceEntities") as NameValueCollection;
+                NameValueCollection section = ConfigurationManager.GetSection("memento/persistenceEntities") as NameValueCollection;
 
                 string fullName = GetType().FullName;
 
@@ -225,7 +226,7 @@ namespace Memento.Persistence.Commons
                     {
                         if (cAttribute is Relation)
                         {
-                            var attRelation = cAttribute as Relation;
+                            Relation attRelation = cAttribute as Relation;
 
                             if (attRelation.Type != RelationType.Reference)
                             {
@@ -235,13 +236,13 @@ namespace Memento.Persistence.Commons
                             }
                         }else if(cAttribute is PrimaryKey)
                         {
-                            var prk = cAttribute as PrimaryKey;
+                            PrimaryKey prk = cAttribute as PrimaryKey;
 
                             _primaryKeyName = propertyInfo.Name;
                             _keyGenerator = prk.Generator;
                         }else if(cAttribute is Field)
                         {
-                            var propField = cAttribute as Field;
+                            Field propField = cAttribute as Field;
 
                             if(!string.IsNullOrEmpty(propField.Name))
                             {
@@ -260,7 +261,7 @@ namespace Memento.Persistence.Commons
         {
             string res = null;
 
-            var stackTrace = new StackTrace();
+            StackTrace stackTrace = new StackTrace();
             StackFrame[] frames = stackTrace.GetFrames();
 
             if (frames != null)

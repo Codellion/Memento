@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Reflection;
 using Memento.Persistence.Commons;
 using Memento.Persistence.Interfaces;
+using Verso.Net.Commons;
+using Verso.Net.Commons.Octopus;
 
 namespace Memento.Persistence
 {
@@ -12,6 +15,7 @@ namespace Memento.Persistence
     /// permitiendo la carga perezosa de dichos datos
     /// </summary>
     /// <typeparam name="T">Tipo del valor almacenado</typeparam>
+    [Serializable]
     public class Dependence<T> : LazyEntity where T : Entity
     {
         #region Atributos
@@ -40,7 +44,7 @@ namespace Memento.Persistence
             {
                 if (_value == null)
                 {
-                    IPersistence<T> servicioPers = new Persistence<T>();
+                    bool octoActivate = false;
 
                     var aux = Activator.CreateInstance<T>();
 
@@ -54,8 +58,44 @@ namespace Memento.Persistence
 
                         prop.SetValue(aux, refAux, null);
 
-                        //Realizamos la busqueda de los datos relacionados
-                        IList<T> res = servicioPers.GetEntities(aux);
+                        var res = new List<T>();
+
+                        //Comprobamos si el modulo de Octopus se encuentra activo
+                        // y en caso afirmativo realizamos la llamada a traves de el
+
+                        if(ConfigurationManager.GetSection("octopus") != null &&
+                           ConfigurationManager.GetSection("octopus/assembliesLocation") != null)
+                        {
+                            var secOctoAsm =
+                                ConfigurationManager.GetSection("octopus/assembliesLocation") as NameValueConfigurationCollection;
+
+                            if (secOctoAsm != null && secOctoAsm["mememento"] != null)
+                            {
+                                octoActivate = true;
+
+                                var verso = new VersoMsg();
+
+                                verso.ServiceBlock = "Memento";
+                                verso.Verb = "GetEntities";
+                                verso.DataVerso = aux;
+
+                                verso = OctopusFacade.ExecuteServiceBlock(verso);
+
+                                if(verso != null)
+                                {
+                                    res = verso.GetData<List<T>>();
+                                }
+                            }
+                        }
+
+                        //Si octopus no se encuentra disponible realizamos la llamada directamente
+                        if (!octoActivate)
+                        {
+                            IPersistence<T> servicioPers = new Persistence<T>();
+
+                            //Realizamos la busqueda de los datos relacionados
+                            res = servicioPers.GetEntities(aux);
+                        }
 
                         if (res != null)
                         {

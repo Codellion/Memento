@@ -143,7 +143,7 @@ namespace Memento.DataAccess.Odbc
         /// <returns>Entidad que se recupera</returns>
         public IDataReader GetEntity(object entidadId)
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
             
             aux.SetEntityId(entidadId);
             Query query = DbUtil<T>.GetQuery(aux);
@@ -159,7 +159,7 @@ namespace Memento.DataAccess.Odbc
         /// <returns>Entidades activas</returns>
         public IDataReader GetEntities()
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 
@@ -189,14 +189,14 @@ namespace Memento.DataAccess.Odbc
         /// <returns>DataSet con las entidades activas</returns>
         public DataSet GetEntitiesDs()
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 
-            var adapter = new OdbcDataAdapter(query.ToSelect(),
+            OdbcDataAdapter adapter = new OdbcDataAdapter(query.ToSelect(),
                                               _servicioDatos.Connection as OdbcConnection);
 
-            var result = new DataSet();
+            DataSet result = new DataSet();
             adapter.Fill(result, "result");
 
             return result;
@@ -212,10 +212,10 @@ namespace Memento.DataAccess.Odbc
         {
             Query query = DbUtil<T>.GetQuery((T) entidadFiltro);
 
-            var adapter = new OdbcDataAdapter(query.ToSelect(),
+            OdbcDataAdapter adapter = new OdbcDataAdapter(query.ToSelect(),
                                               _servicioDatos.Connection as OdbcConnection);
 
-            var result = new DataSet();
+            DataSet result = new DataSet();
             adapter.Fill(result, "result");
 
             return result;
@@ -243,9 +243,9 @@ namespace Memento.DataAccess.Odbc
             _servicioDatos.CommandType = CommandType.StoredProcedure;
             _servicioDatos.CommandText = storeProcedure;
 
-            var adapter = new OdbcDataAdapter(_servicioDatos as OdbcCommand);
+            OdbcDataAdapter adapter = new OdbcDataAdapter(_servicioDatos as OdbcCommand);
 
-            var result = new DataSet();
+            DataSet result = new DataSet();
             adapter.Fill(result, "result");
 
             return result;

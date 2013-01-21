@@ -34,7 +34,7 @@ namespace Memento.Persistence.Commons.Keygen
                     {   
                         Stream fVault = new FileStream("Vault.keys", FileMode.Open);
 
-                        var unMarshall = new XmlSerializer(typeof(Vault));
+                        XmlSerializer unMarshall = new XmlSerializer(typeof(Vault));
                         _vault = (Vault) unMarshall.Deserialize(fVault);
 
                         _vault.PrepareDeserialize();
@@ -163,7 +163,7 @@ namespace Memento.Persistence.Commons.Keygen
 
                 Stream data = new FileStream("Vault.keys", FileMode.Create);
 
-                var marshall = new XmlSerializer(typeof(Vault));
+                XmlSerializer marshall = new XmlSerializer(typeof(Vault));
 
                 marshall.Serialize(data, Vault);
 

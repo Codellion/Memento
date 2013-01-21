@@ -19,7 +19,7 @@ namespace Memento.Test.App
 
         private void Entities_Load(object sender, EventArgs e)
         {
-            var section = ConfigurationManager.GetSection("memento/persistenceEntities") as NameValueCollection;
+            NameValueCollection section = ConfigurationManager.GetSection("memento/persistenceEntities") as NameValueCollection;
 
             cmbEntidades.Items.Clear();
 
@@ -88,7 +88,7 @@ namespace Memento.Test.App
                     }
                     else
                     {
-                        var drv = row.DataBoundItem as DataRowView;
+                        DataRowView drv = row.DataBoundItem as DataRowView;
 
                         switch (drv.Row.RowState)
                         {
@@ -110,15 +110,15 @@ namespace Memento.Test.App
 
         private void button3_Click(object sender, EventArgs e)
         {
-            using (var context = new DataContext())
+            using (DataContext context = new DataContext())
             {
-                var servFac22 = context.CreatePersistenceService<Factura>() as IPersistence<Factura>;
+                IPersistence<Factura> servFac22 = context.CreatePersistenceService<Factura>();
 
                 context.SaveChanges();
             }
 
 
-            var cli = new Cliente();
+            Cliente cli = new Cliente();
             cli.Nombre = "test";
             //IPersistence<Linea> pers = new Persistence<Linea>();
 
@@ -206,7 +206,7 @@ namespace Memento.Test.App
 
                 IList<ProductoProveedor> provsLapiz = lapiz.Proveedores.Value;
 
-                var newProv4 = new Proveedor();
+                Proveedor newProv4 = new Proveedor();
                 newProv4.Nombre = "Nuevo Proveedor 5";
                 newProv4.Telefono = "5";
                 newProv4.Email = "e@x.com";
@@ -222,13 +222,13 @@ namespace Memento.Test.App
 
                 IPersistence<TipoFactura> tipoFactServ = new Persistence<TipoFactura>();
 
-                var tipo1 = new TipoFactura {Descripcion = "Tipo factura 1"};
+                TipoFactura tipo1 = new TipoFactura { Descripcion = "Tipo factura 1" };
 
                 tipoFactServ.PersistEntity(tipo1);
 
                 IPersistence<TipoCliente> tipoClienteServ = new Persistence<TipoCliente>();
 
-                var tipoC1 = new TipoCliente { Descripcion = "Tipo cliente 1" };
+                TipoCliente tipoC1 = new TipoCliente { Descripcion = "Tipo cliente 1" };
 
                 tipoClienteServ.PersistEntity(tipoC1);
 

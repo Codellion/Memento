@@ -43,7 +43,7 @@ namespace Memento.Persistence.Interfaces
         /// Método que devuelve todas las Entidades activas
         /// </summary>
         /// <returns>Entidades activas</returns>
-        IList<T> GetEntities();
+        List<T> GetEntities();
 
         /// <summary>
         /// Método que devuelve todas las Entidades que 
@@ -51,7 +51,7 @@ namespace Memento.Persistence.Interfaces
         /// </summary>
         /// <param name="filterEntity">Entidad utilizada de filtro</param>
         /// <returns>Entidades filtradas</returns>
-        IList<T> GetEntities(T filterEntity);
+        List<T> GetEntities(T filterEntity);
 
         /// <summary>
         /// Método que devuelve un DataSeT con todas las Entidades activas

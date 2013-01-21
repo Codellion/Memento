@@ -93,7 +93,7 @@ namespace Memento.Persistence
                     object id;
                     if (_context == null)
                     {
-                        using (var dtContext = new DataContext())
+                        using (DataContext dtContext = new DataContext())
                         {
                             try
                             {
@@ -151,7 +151,7 @@ namespace Memento.Persistence
             {
                 if (_context == null)
                 {
-                    using (var dtContext = new DataContext())
+                    using (DataContext dtContext = new DataContext())
                     {
                         try
                         {
@@ -206,7 +206,7 @@ namespace Memento.Persistence
             {
                 if (_context == null)
                 {
-                    using (var dtContext = new DataContext())
+                    using (DataContext dtContext = new DataContext())
                     {
                         try
                         {
@@ -263,19 +263,22 @@ namespace Memento.Persistence
         /// Devuelve una lista de todas las entidades activas existentes en BBDD
         /// </summary>
         /// <returns>Lista da entidades</returns>
-        public IList<T> GetEntities()
+        public List<T> GetEntities()
         {
-            IList<T> entidades = new List<T>();
+            List<T> entidades = new List<T>();
 
-            IDataReader dr = PersistenceService.GetEntities();
-
-            //Realizamos el mapeo de las entidades desde los datos de cada fila
-            while (dr.Read())
+            if(PersistenceService != null)
             {
-                entidades.Add(ParseRowToEntidad(dr));
-            }
+                IDataReader dr = PersistenceService.GetEntities();
 
-            dr.Close();
+                //Realizamos el mapeo de las entidades desde los datos de cada fila
+                while (dr.Read())
+                {
+                    entidades.Add(ParseRowToEntidad(dr));
+                }
+
+                dr.Close();
+            }
 
             return entidades;
         }
@@ -286,19 +289,22 @@ namespace Memento.Persistence
         /// </summary>
         /// <param name="filterEntity">Entidad que actua como filtro</param>
         /// <returns>Lista de entidades</returns>
-        public IList<T> GetEntities(T filterEntity)
+        public List<T> GetEntities(T filterEntity)
         {
-            IList<T> entidades = new List<T>();
+            List<T> entidades = new List<T>();
 
-            IDataReader dr = PersistenceService.GetEntities(filterEntity);
-
-            //Realizamos el mapeo de las entidades desde los datos de cada fila
-            while (dr.Read())
+            if (PersistenceService != null)
             {
-                entidades.Add(ParseRowToEntidad(dr));
-            }
+                IDataReader dr = PersistenceService.GetEntities(filterEntity);
 
-            dr.Close();
+                //Realizamos el mapeo de las entidades desde los datos de cada fila
+                while (dr.Read())
+                {
+                    entidades.Add(ParseRowToEntidad(dr));
+                }
+
+                dr.Close();
+            }
 
             return entidades;
         }
@@ -309,6 +315,11 @@ namespace Memento.Persistence
         /// <returns>Dataset con el resultado</returns>
         public DataSet GetEntitiesDs()
         {
+            if (PersistenceService == null)
+            {
+                return null;
+            }
+
             return PersistenceService.GetEntitiesDs();
         }
 
@@ -320,6 +331,11 @@ namespace Memento.Persistence
         /// <returns>Dataset con el resultado del filtro</returns>
         public DataSet GetEntitiesDs(T filterEntity)
         {
+            if (PersistenceService == null)
+            {
+                return null;
+            }
+
             return PersistenceService.GetEntitiesDs(filterEntity);
         }
 
@@ -332,6 +348,11 @@ namespace Memento.Persistence
         /// <returns>Dataset con los resultados</returns>
         public DataSet GetEntitiesDs(string storeProcedure, IDictionary<string, object> procParams)
         {
+            if (PersistenceService == null)
+            {
+                return null;
+            }
+
             return PersistenceService.GetEntitiesDs(storeProcedure, procParams);
         }
 
@@ -366,7 +387,7 @@ namespace Memento.Persistence
 
             PropertyInfo refsInfo = tipoEntidad.GetProperty("References");
 
-            var referencias = (IList<String>) refsInfo.GetValue(targetObject, null);
+            List<String> referencias = (List<String>)refsInfo.GetValue(targetObject, null);
 
             //Comprobamos si la propiedad contiene niveles de profundidad
             if (propName.Contains("."))
@@ -385,7 +406,7 @@ namespace Memento.Persistence
                     //Saber si tenemos que instanciarla
                     if (subRefsInfo != null)
                     {
-                        var subReferencias = (IList<String>) subRefsInfo.GetValue(aux, null);
+                        IList<String> subReferencias = (IList<String>)subRefsInfo.GetValue(aux, null);
 
                         //Comprobamos si es necesario establecer el valor
                         if (sprop != null)
@@ -402,7 +423,7 @@ namespace Memento.Persistence
                                         object refValue =
                                             Activator.CreateInstance(sprop.PropertyType.GetGenericArguments()[0]);
 
-                                        var param = new object[1];
+                                        object[] param = new object[1];
                                         param[0] = refValue;
 
                                         svalue = Activator.CreateInstance(sprop.PropertyType, param);
@@ -651,7 +672,7 @@ namespace Memento.Persistence
                     //Comprobamos si es única o múltiple
                     if (!depValueImplict.GetType().Name.StartsWith("BindingList"))
                     {
-                        var isDirty = (bool) depValue.GetType()
+                        bool isDirty = (bool) depValue.GetType()
                                                  .GetProperty("IsDirty").GetValue(depValue, null);
 
                         //Si la dependencia no ha sido modificada no hacemos nada
@@ -683,7 +704,7 @@ namespace Memento.Persistence
 
                         MethodInfo operationEntity = null;
 
-                        var statusEnt = (StatusDependence)
+                        StatusDependence statusEnt = (StatusDependence)
                                         depValue.GetType().GetProperty("Status").GetValue(depValue, null);
 
                         switch (statusEnt)
@@ -724,7 +745,7 @@ namespace Memento.Persistence
                     else
                     {
                         //Obtenemos el iterador de las dependencias e insertamos cada una de ellas si procede
-                        var isDirty = (bool) depValue.GetType()
+                        bool isDirty = (bool) depValue.GetType()
                                                  .GetProperty("IsDirty").GetValue(depValue, null);
 
                         //Si la colección no ha sido modificada no hacemos nada
@@ -785,14 +806,14 @@ namespace Memento.Persistence
 
                     //Si la dependencia es una relación N-M es necesario asegurarnos de que todas
                     //las entidades de la relación existen para poder insertar las FKs
-                    var depValue = currentDepValue as NmEntity;
+                    NmEntity depValue = currentDepValue as NmEntity;
                     if (depValue != null)
                     {
                         ManageRelationsNmEntity(entity, depValue, dtContext);
                     }
 
                     //Actualizamos la referencia de la entidad padre recien creada
-                    var refName = (string) value.GetType().GetProperty("ReferenceName").GetValue(value, null);
+                    string refName = (string) value.GetType().GetProperty("ReferenceName").GetValue(value, null);
                     PropertyInfo refEntityProp = currentDepValue.GetType().GetProperty(refName);
 
                     object refEntity = refEntityProp.GetValue(currentDepValue, null);
@@ -833,7 +854,7 @@ namespace Memento.Persistence
         {
             int numCols = dr.FieldCount;
 
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             //Por cada columna establecemos el valor
             //dentro de la entidad que vamos a devolver
@@ -856,7 +877,7 @@ namespace Memento.Persistence
         {
             int numCols = dr.Table.Columns.Count;
 
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             //Por cada columna establecemos el valor
             //dentro de la entidad que vamos a devolver

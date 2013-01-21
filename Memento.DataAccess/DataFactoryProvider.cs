@@ -2,6 +2,7 @@
 using System.Collections.Specialized;
 using System.Configuration;
 using System.Data;
+using System.IO;
 using System.Reflection;
 using Memento.DataAccess.Interfaces;
 using Memento.Persistence.Commons;
@@ -26,11 +27,11 @@ namespace Memento.DataAccess
 
             if (IsEntity(typeof (T)))
             {
-                var providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
+                NameValueCollection providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
 
                 if(providerConfig == null)
                 {
-                    throw new Exception("Error in app.config, you must set a provider config");
+                    return null;
                 }
 
                 string proveedorPers = providerConfig["persistenceProvider"];
@@ -40,13 +41,13 @@ namespace Memento.DataAccess
 
                 if (!string.IsNullOrEmpty(proveedorPers))
                 {
-                    Assembly asm = Assembly.LoadFile(AppDomain.CurrentDomain.BaseDirectory + assemblyPers);
+                    Assembly asm = Assembly.LoadFrom(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar + assemblyPers);
                     tProveedor = asm.GetType(proveedorPers);
                 }
 
                 if (tProveedor != null)
                 {
-                    var genParam = new Type[1];
+                    Type[] genParam = new Type[1];
                     genParam[0] = typeof (T);
 
                     tProveedor = tProveedor.MakeGenericType(genParam);
@@ -73,7 +74,7 @@ namespace Memento.DataAccess
 
         public static IDbConnection GetConnection<T>(string entornoBd)
         {
-            var providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
+            NameValueCollection providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
 
             if (providerConfig == null)
             {
@@ -87,13 +88,14 @@ namespace Memento.DataAccess
 
             if (!string.IsNullOrEmpty(proveedorPers))
             {
-                Assembly asm = Assembly.LoadFile(AppDomain.CurrentDomain.BaseDirectory + assemblyPers);
+                Assembly asm = Assembly.LoadFrom(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar + assemblyPers);
                 tProveedor = asm.GetType(proveedorPers);
+                
             }
 
             if (tProveedor != null)
             {
-                var genParam = new Type[1];
+                Type[] genParam = new Type[1];
                 genParam[0] = typeof (T);
 
                 tProveedor = tProveedor.MakeGenericType(genParam);
@@ -105,7 +107,7 @@ namespace Memento.DataAccess
                 }
                 else
                 {
-                    var param = new object[1];
+                    object[] param = new object[1];
                     param[0] = entornoBd;
 
                     res = Activator.CreateInstance(tProveedor, param) as IDataPersistence;

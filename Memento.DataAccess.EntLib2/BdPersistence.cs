@@ -169,7 +169,7 @@ namespace Memento.DataAccess.EntLib2
         /// <returns>Entidad que se recupera</returns>
         public IDataReader GetEntity(object entidadId)
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
            
             aux.SetEntityId(entidadId);
             Query query = DbUtil<T>.GetQuery(aux);
@@ -183,7 +183,7 @@ namespace Memento.DataAccess.EntLib2
         /// <returns>Entidades activas</returns>
         public IDataReader GetEntities()
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 
@@ -209,7 +209,7 @@ namespace Memento.DataAccess.EntLib2
         /// <returns>DataSet con las entidades activas</returns>
         public DataSet GetEntitiesDs()
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 
@@ -238,7 +238,7 @@ namespace Memento.DataAccess.EntLib2
         /// <returns>Dataset con los resultados</returns>
         public DataSet GetEntitiesDs(string storeProcedure, IDictionary<string, object> parametros)
         {
-            var parametrosProc = new object[parametros.Count];
+            object[] parametrosProc = new object[parametros.Count];
             int count = 0;
 
             foreach (string key in parametros.Keys)

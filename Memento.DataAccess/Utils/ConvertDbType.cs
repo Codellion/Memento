@@ -15,7 +15,7 @@ namespace Memento.DataAccess.Utils
 
         static ConvertDbType()
         {
-            var dbTypeMapEntry = new DbTypeMapEntry(typeof (bool), DbType.Boolean, SqlDbType.Bit);
+            DbTypeMapEntry dbTypeMapEntry = new DbTypeMapEntry(typeof(bool), DbType.Boolean, SqlDbType.Bit);
             DbTypeList.Add(dbTypeMapEntry);
             dbTypeMapEntry = new DbTypeMapEntry(typeof (byte), DbType.Double, SqlDbType.TinyInt);
             DbTypeList.Add(dbTypeMapEntry);

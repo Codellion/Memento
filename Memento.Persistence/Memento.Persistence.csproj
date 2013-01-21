@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Memento.Persistence</RootNamespace>
     <AssemblyName>Memento.Persistence</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -105,6 +105,10 @@
     <Compile Include="StatusDependence.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Verso\Verso.Net.Commons\Verso.Net.Commons.csproj">
+      <Project>{0E7D4746-344B-4261-A3B6-C94FB0561133}</Project>
+      <Name>Verso.Net.Commons</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Memento.DataAccess\Memento.DataAccess.csproj">
       <Project>{7A26A935-81D5-4A53-87E8-E6AC191ED1FF}</Project>
       <Name>Memento.DataAccess</Name>

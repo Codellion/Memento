@@ -170,7 +170,7 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>Entidad que se recupera</returns>
         public IDataReader GetEntity(object entidadId)
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             aux.SetEntityId(entidadId);
             Query query = DbUtil<T>.GetQuery(aux);
@@ -184,7 +184,7 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>Entidades activas</returns>
         public IDataReader GetEntities()
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 
@@ -210,7 +210,7 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>DataSet con las entidades activas</returns>
         public DataSet GetEntitiesDs()
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             Query query = DbUtil<T>.GetQuery(aux);
 
@@ -239,13 +239,13 @@ namespace Memento.DataAccess.EntLib5
         /// <returns>Dataset con los resultados</returns>
         public DataSet GetEntitiesDs(string storeProcedure, IDictionary<string, object> parametros)
         {
-            var parametrosProc = new object[parametros.Count];
+            object[] parametrosProc = new object[parametros.Count];
             int count = 0;
 
             foreach (string key in parametros.Keys)
             {
                 object valor = parametros[key];
-                var param = new SqlParameter(key, DbUtil<T>.GetDbType(valor.GetType())) {Value = valor};
+                SqlParameter param = new SqlParameter(key, DbUtil<T>.GetDbType(valor.GetType())) { Value = valor };
 
                 parametrosProc[count] = param;
 

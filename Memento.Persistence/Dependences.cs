@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Reflection;
 using Memento.Persistence.Commons;
 using Memento.Persistence.Interfaces;
+using Verso.Net.Commons;
+using Verso.Net.Commons.Octopus;
 
 namespace Memento.Persistence
 {
@@ -12,6 +15,7 @@ namespace Memento.Persistence
     /// permitiendo la carga perezosa de dichos datos
     /// </summary>
     /// <typeparam name="T">Tipo de las dependencias</typeparam>
+    [Serializable]
     public class Dependences<T> : LazyEntity where T : Entity
     {
         #region Atributos
@@ -45,7 +49,7 @@ namespace Memento.Persistence
         /// Atributo privado que sirve para almacenar los valores
         /// de las dependencias
         /// </summary>
-        private IList<T> _value;
+        private BindingList<T> _value;
 
         #endregion
 
@@ -54,13 +58,13 @@ namespace Memento.Persistence
         /// <summary>
         /// Propiedad que permite la carga perezosa de los valores de las dependecias
         /// </summary>
-        public IList<T> Value
+        public BindingList<T> Value
         {
             get
             {
                 if (_value == null)
                 {
-                    IPersistence<T> servicioPers = new Persistence<T>();
+                    bool octoActivate = false;
 
                     var aux = Activator.CreateInstance<T>();
 
@@ -74,8 +78,44 @@ namespace Memento.Persistence
 
                         prop.SetValue(aux, refAux, null);
 
-                        //Realizamos la busqueda de los datos relacionados
-                        IList<T> res = servicioPers.GetEntities(aux);
+                        var res = new List<T>();
+
+                        //Comprobamos si el modulo de Octopus se encuentra activo
+                        // y en caso afirmativo realizamos la llamada a traves de el
+
+                        if (ConfigurationManager.GetSection("octopus") != null &&
+                           ConfigurationManager.GetSection("octopus/assembliesLocation") != null)
+                        {
+                            var secOctoAsm =
+                                ConfigurationManager.GetSection("octopus/assembliesLocation") as NameValueConfigurationCollection;
+
+                            if (secOctoAsm != null && secOctoAsm["mememento"] != null)
+                            {
+                                octoActivate = true;
+
+                                var verso = new VersoMsg();
+
+                                verso.ServiceBlock = "Memento";
+                                verso.Verb = "GetEntities";
+                                verso.DataVerso = aux;
+
+                                verso = OctopusFacade.ExecuteServiceBlock(verso);
+
+                                if (verso != null)
+                                {
+                                    res = verso.GetData<List<T>>();
+                                }
+                            }
+                        }
+
+                        //Si octopus no se encuentra disponible realizamos la llamada directamente
+                        if (!octoActivate)
+                        {
+                            IPersistence<T> servicioPers = new Persistence<T>();
+
+                            //Realizamos la busqueda de los datos relacionados
+                            res = servicioPers.GetEntities(aux);
+                        }
 
                         if (res != null)
                         {
@@ -123,11 +163,11 @@ namespace Memento.Persistence
         /// <summary>
         /// Lista de dependencias a crear
         /// </summary>
-        protected IList<T> Inserts
+        protected List<T> Inserts
         {
             get
             {
-                IList<T> res = new List<T>();
+                List<T> res = new List<T>();
 
                 foreach (int index in _inserts.Keys)
                 {
@@ -141,11 +181,11 @@ namespace Memento.Persistence
         /// <summary>
         /// Lista de dependencias a actualizar
         /// </summary>
-        protected IList<T> Updates
+        protected List<T> Updates
         {
             get
             {
-                IList<T> res = new List<T>();
+                List<T> res = new List<T>();
 
                 foreach (int index in _updates.Keys)
                 {
@@ -159,15 +199,15 @@ namespace Memento.Persistence
         /// <summary>
         /// Lista de dependencias a eliminar
         /// </summary>
-        protected IList<T> Deletes
+        protected List<T> Deletes
         {
             get
             {
-                IList<T> res = new List<T>();
+                List<T> res = new List<T>();
 
                 foreach (int index in _deletes.Keys)
                 {
-                    var aux = Activator.CreateInstance<T>();
+                    T aux = Activator.CreateInstance<T>();
 
                     aux.SetEntityId(_deletes[index]);
 
@@ -307,7 +347,7 @@ namespace Memento.Persistence
         /// <returns></returns>
         public T CreateDependence()
         {
-            var aux = Activator.CreateInstance<T>();
+            T aux = Activator.CreateInstance<T>();
 
             if (!string.IsNullOrEmpty(ReferenceName))
             {

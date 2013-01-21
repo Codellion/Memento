@@ -100,7 +100,7 @@ namespace Memento.Persistence.Commons.Keygen
                 return;
             }
             
-            for(var i = 0; i < Keys.Length; i++)
+            for(int i = 0; i < Keys.Length; i++)
             {
                 EntitiesVault[Keys[i]] = Values[i];
             }

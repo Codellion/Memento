@@ -1,9 +1,11 @@
-﻿using Memento.Persistence;
+﻿using System;
+using Memento.Persistence;
 using Memento.Persistence.Commons;
 using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.Test.Entities
 {
+    [Serializable]
     public class ProductoProveedor : NmEntity
     {
         [PrimaryKey(Generator = KeyGenerationType.Database)]

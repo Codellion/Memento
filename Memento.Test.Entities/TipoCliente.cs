@@ -1,8 +1,10 @@
-﻿using Memento.Persistence.Commons;
+﻿using System;
+using Memento.Persistence.Commons;
 using Memento.Persistence.Commons.Annotations;
 
 namespace Memento.Test.Entities
 {
+    [Serializable]
     [Table(Name = "TipoCliente")]
     public class TipoCliente : Entity
     {
