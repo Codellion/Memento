@@ -83,28 +83,21 @@ namespace Memento.Persistence
                         //Comprobamos si el modulo de Octopus se encuentra activo
                         // y en caso afirmativo realizamos la llamada a traves de el
 
-                        if (ConfigurationManager.GetSection("octopus") != null &&
-                           ConfigurationManager.GetSection("octopus/assembliesLocation") != null)
+                        if (ConfigurationManager.GetSection("octopus") != null)
                         {
-                            var secOctoAsm =
-                                ConfigurationManager.GetSection("octopus/assembliesLocation") as NameValueConfigurationCollection;
+                            octoActivate = true;
 
-                            if (secOctoAsm != null && secOctoAsm["mememento"] != null)
+                            var verso = new VersoMsg();
+
+                            verso.ServiceBlock = "Memento";
+                            verso.Verb = "GetEntities";
+                            verso.DataVerso = aux;
+
+                            verso = OctopusFacade.ExecuteServiceBlock(verso);
+
+                            if (verso != null)
                             {
-                                octoActivate = true;
-
-                                var verso = new VersoMsg();
-
-                                verso.ServiceBlock = "Memento";
-                                verso.Verb = "GetEntities";
-                                verso.DataVerso = aux;
-
-                                verso = OctopusFacade.ExecuteServiceBlock(verso);
-
-                                if (verso != null)
-                                {
-                                    res = verso.GetData<List<T>>();
-                                }
+                                res = verso.GetData<List<T>>();
                             }
                         }
 
@@ -270,11 +263,11 @@ namespace Memento.Persistence
         /// <param name="entidad">Entidad que contiene la dependencia</param>
         public Dependences(string refName, Entity entidad)
         {
-            Initialize();
-
             IsDirty = false;
             ReferenceName = refName;
             EntityRef = entidad;
+
+            Initialize();
         }
 
         #endregion
