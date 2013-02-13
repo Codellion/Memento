@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Configuration;
 using Memento.Persistence.Commons;
 using Memento.Persistence.Commons.Annotations;
+using Memento.Persistence.Commons.Config;
 
 namespace Memento.DataAccess.Utils
 {
@@ -118,14 +119,14 @@ namespace Memento.DataAccess.Utils
 
             if (TypeKeyGen == KeyGenerationType.Database)
             {
-                NameValueCollection providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
+                var mementoConfig = ConfigurationManager.GetSection("spock/memento") as MementoSection;
 
-                if (providerConfig == null)
+                if (mementoConfig == null || mementoConfig.ProviderConfig == null)
                 {
                     throw new Exception("Error in app.config, you must set a provider config");
                 }
 
-                string pKdbComand = providerConfig["databaseKeyCommand"];
+                string pKdbComand = mementoConfig.ProviderConfig.DbKeyCommand;
 
                 selectId += pKdbComand;
             }

@@ -5,6 +5,7 @@ using System.Configuration;
 using System.Data;
 using System.Windows.Forms;
 using Memento.Persistence;
+using Memento.Persistence.Commons.Config;
 using Memento.Persistence.Interfaces;
 using Memento.Test.Entities;
 
@@ -19,13 +20,13 @@ namespace Memento.Test.App
 
         private void Entities_Load(object sender, EventArgs e)
         {
-            NameValueCollection section = ConfigurationManager.GetSection("memento/persistenceEntities") as NameValueCollection;
+            var section = ConfigurationManager.GetSection("spock/memento") as MementoSection;
 
             cmbEntidades.Items.Clear();
 
-            foreach (string cls in section.AllKeys)
+            foreach (PersistenceEntity cls in section.PersistenceEntities)
             {
-                cmbEntidades.Items.Add(section[cls]);
+                cmbEntidades.Items.Add(cls.Table);
             }
 
             cmbEntidades.Items.Insert(0, string.Empty);

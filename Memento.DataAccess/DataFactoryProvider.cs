@@ -6,6 +6,7 @@ using System.IO;
 using System.Reflection;
 using Memento.DataAccess.Interfaces;
 using Memento.Persistence.Commons;
+using Memento.Persistence.Commons.Config;
 
 namespace Memento.DataAccess
 {
@@ -27,15 +28,17 @@ namespace Memento.DataAccess
 
             if (IsEntity(typeof (T)))
             {
-                NameValueCollection providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
+                var mementoConfig = ConfigurationManager.GetSection("spock/memento") as MementoSection;
 
-                if(providerConfig == null)
+                if (mementoConfig == null || mementoConfig.ProviderConfig == null)
                 {
                     return null;
                 }
 
-                string proveedorPers = providerConfig["persistenceProvider"];
-                string assemblyPers = providerConfig["assemblyPersistenceProvider"];
+                var providerConfig = mementoConfig.ProviderConfig;
+
+                string proveedorPers = providerConfig.ClassName;
+                string assemblyPers = providerConfig.Assembly;
 
                 Type tProveedor = null;
 
@@ -74,15 +77,17 @@ namespace Memento.DataAccess
 
         public static IDbConnection GetConnection<T>(string entornoBd)
         {
-            NameValueCollection providerConfig = ConfigurationManager.GetSection("memento/providerConfig") as NameValueCollection;
+            var mementoConfig = ConfigurationManager.GetSection("spock/memento") as MementoSection;
 
-            if (providerConfig == null)
+            if (mementoConfig == null || mementoConfig.ProviderConfig == null)
             {
-                throw new Exception("Error in app.config, you must set a provider config");
+                throw new Exception("Error in app.config, you must set a provider config of Memento");
             }
 
-            string proveedorPers = providerConfig["persistenceProvider"];
-            string assemblyPers = providerConfig["assemblyPersistenceProvider"];
+            var providerConfig = mementoConfig.ProviderConfig;
+
+            string proveedorPers = providerConfig.ClassName;
+            string assemblyPers = providerConfig.Assembly;
 
             Type tProveedor = null;
 

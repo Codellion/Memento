@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Configuration;
 using System.Diagnostics;
-using System.Reflection;
-using System.Xml.Serialization;
+
 using Memento.Persistence.Commons.Annotations;
+using Memento.Persistence.Commons.Config;
 
 namespace Memento.Persistence.Commons
 {
@@ -20,60 +18,20 @@ namespace Memento.Persistence.Commons
         #region Atributos
 
         /// <summary>
-        /// Propiedades privadas de la entidad
+        /// Prototipo del mapeo de la clase
         /// </summary>
-        private readonly IDictionary<string, object> _propValues;
-
+        private Prototype Prototype { get; set; }
+        
         /// <summary>
         /// Booleano que informa si la entidad esta activa o no
         /// </summary>
         private bool _activo = true;
-
-        /// <summary>
-        /// Lista de propiedades que contienen una dependecia de la entidad
-        /// </summary>
-        private List<string> _dependences;
-
+        
         /// <summary>
         /// Indica si la entidad esta sincronizada con la BBDD
         /// </summary>
         private bool _isDirty;
-
-        /// <summary>
-        /// Lista de propiedades que contienen una referencia hacía la entidad
-        /// </summary>
-        private List<string> _references;
-
-        /// <summary>
-        /// Nombre de la tabla en BBDD
-        /// </summary>
-        private string _table;
-
-        /// <summary>
-        /// Lista de propiedades que contienen no son persistentes
-        /// </summary>
-        private List<string> _transientProps;
-
-        /// <summary>
-        /// Atributos de las relaciones de la entidad
-        /// </summary>
-        private IDictionary<string, string> _dependsConfig;
-
-        /// <summary>
-        /// Nombre del campo que contiene la clave de la entidad
-        /// </summary>
-        private string _primaryKeyName;
-
-        /// <summary>
-        /// Estrategia usada para generar la clave de la entidad
-        /// </summary>
-        private KeyGenerationType _keyGenerator = KeyGenerationType.Memento;
-
-        /// <summary>
-        /// Mapeo de propiedades
-        /// </summary>
-        private readonly IDictionary<string, string> _fieldsMap;
-
+        
         #endregion
 
         #region Propiedades
@@ -83,8 +41,8 @@ namespace Memento.Persistence.Commons
         /// </summary>
         public List<string> References
         {
-            get { return _references ?? (_references = new List<string>()); }
-            set { _references = value; }
+            get { return Prototype.References ?? (Prototype.References = new List<string>()); }
+            set { Prototype.References = value; }
         }
 
         /// <summary>
@@ -92,8 +50,8 @@ namespace Memento.Persistence.Commons
         /// </summary>
         public List<string> Dependences
         {
-            get { return _dependences ?? (_dependences = new List<string>()); }
-            set { _dependences = value; }
+            get { return Prototype.Dependences ?? (Prototype.Dependences = new List<string>()); }
+            set { Prototype.Dependences = value; }
         }
 
         /// <summary>
@@ -110,8 +68,8 @@ namespace Memento.Persistence.Commons
         /// </summary>
         public string Table
         {
-            get { return _table; }
-            set { _table = value; }
+            get { return Prototype.Table; }
+            set { Prototype.Table = value; }
         }
 
         /// <summary>
@@ -119,8 +77,8 @@ namespace Memento.Persistence.Commons
         /// </summary>
         public List<string> TransientProps
         {
-            get { return _transientProps; }
-            set { _transientProps = value; }
+            get { return Prototype.TransientProps; }
+            set { Prototype.TransientProps = value; }
         }
 
         /// <summary>
@@ -137,8 +95,8 @@ namespace Memento.Persistence.Commons
         /// </summary>
         public KeyGenerationType KeyGenerator
         {
-            get { return _keyGenerator; }
-            set { _keyGenerator = value; }
+            get { return Prototype.KeyGenerator; }
+            set { Prototype.KeyGenerator = value; }
         }
 
         #endregion
@@ -151,123 +109,24 @@ namespace Memento.Persistence.Commons
         /// </summary>
         protected Entity()
         {
-            _primaryKeyName = string.Empty;
-            _fieldsMap = new Dictionary<string, string>();
-
-            TransientProps = new List<string>(6)
-                                 {
-                                     "TransientProps",
-                                     "Table",
-                                     "Dependences",
-                                     "References",
-                                     "IsDirty",
-                                     "PropertyChanged",
-                                     "KeyGenerator",
-                                     "FieldsMap"
-                                 };
-
-
-            foreach (object cAttribute in GetType().GetCustomAttributes(false))
-            {
-                if(cAttribute is Table)
-                {
-                    Table tAnnotation = cAttribute as Table;
-
-                    if(!string.IsNullOrEmpty(tAnnotation.Name))
-                    {
-                        Table = tAnnotation.Name;
-                    }
-                }
-            }
-
-            if(string.IsNullOrEmpty(Table))
-            {
-                NameValueCollection section = ConfigurationManager.GetSection("memento/persistenceEntities") as NameValueCollection;
-
-                string fullName = GetType().FullName;
-
-                if (fullName != null && section != null) Table = section[fullName];
-
-                if (string.IsNullOrEmpty(Table)) Table = GetType().Name;
-            }
-            
-            References = new List<string>();
-            Dependences = new List<string>();
-
-            foreach (PropertyInfo prop in GetType().GetProperties())
-            {
-                if (prop.PropertyType.BaseType == typeof (EaterEntity))
-                {
-                    References.Add(prop.Name);
-                }
-                else if (prop.PropertyType.BaseType == typeof (LazyEntity))
-                {
-                    Dependences.Add(prop.Name);
-                }
-            }
-
-            _propValues = new Dictionary<string, object>(GetType().GetProperties().Length);
-
-            //Inicializamos las propiedades con atributos propios
-            InitializeCustomProps();
+            Prototype = MetadataCache.Instance.GetMetadata(this);
         }
 
         #endregion
 
         #region Métodos Privados
 
-        private void InitializeCustomProps()
-        {
-            foreach (PropertyInfo propertyInfo in GetType().GetProperties())
-            {
-                if (propertyInfo.GetCustomAttributes(false).Length > 0)
-                {
-                    foreach (object cAttribute in propertyInfo.GetCustomAttributes(false))
-                    {
-                        if (cAttribute is Relation)
-                        {
-                            Relation attRelation = cAttribute as Relation;
-
-                            if (attRelation.Type != RelationType.Reference)
-                            {
-                                if(_dependsConfig == null) _dependsConfig = new Dictionary<string, string>();
-
-                                _dependsConfig.Add(propertyInfo.Name, attRelation.PropertyName);
-                            }
-                        }else if(cAttribute is PrimaryKey)
-                        {
-                            PrimaryKey prk = cAttribute as PrimaryKey;
-
-                            _primaryKeyName = propertyInfo.Name;
-                            _keyGenerator = prk.Generator;
-                        }else if(cAttribute is Field)
-                        {
-                            Field propField = cAttribute as Field;
-
-                            if(!string.IsNullOrEmpty(propField.Name))
-                            {
-                                _fieldsMap[propertyInfo.Name] = propField.Name;    
-                            }
-                        }else if(cAttribute is Transient)
-                        {   
-                            TransientProps.Add(propertyInfo.Name);
-                        }
-                    }
-                }
-            }
-        }
-
         private string GetPropertyName()
         {
             string res = null;
 
-            StackTrace stackTrace = new StackTrace();
-            StackFrame[] frames = stackTrace.GetFrames();
+            var stackTrace = new StackTrace();
+            var frames = stackTrace.GetFrames();
 
             if (frames != null)
             {
-                StackFrame thisFrame = frames[2];
-                MethodBase method = thisFrame.GetMethod();
+                var thisFrame = frames[2];
+                var method = thisFrame.GetMethod();
 
                 if (method.Name.Length > 4) res = method.Name.Substring(4);
             }
@@ -294,10 +153,10 @@ namespace Memento.Persistence.Commons
         /// <returns></returns>
         public void SetEntityId(object id)
         {
-            Type tipoT = GetType();
-            Type tId = tipoT.GetProperty(GetEntityIdName()).PropertyType;
+            var tipoT = GetType();
+            var tId = tipoT.GetProperty(GetEntityIdName()).PropertyType;
 
-            Type nullType = Nullable.GetUnderlyingType(tId);
+            var nullType = Nullable.GetUnderlyingType(tId);
 
             object nullValue = nullType != null ? Convert.ChangeType(id, nullType) : id;
 
@@ -310,9 +169,9 @@ namespace Memento.Persistence.Commons
         /// <returns></returns>
         public string GetEntityIdName()
         {
-            if(!string.IsNullOrEmpty(_primaryKeyName))
+            if(!string.IsNullOrEmpty(Prototype.PrimaryKeyName))
             {
-                return _primaryKeyName;
+                return Prototype.PrimaryKeyName;
             }
 
             return GetType().Name + "Id";
@@ -337,12 +196,12 @@ namespace Memento.Persistence.Commons
 
             if (!string.IsNullOrEmpty(info))
             {
-                object prop = _propValues.ContainsKey(info) ? _propValues[info] : null;
+                object prop = Prototype.PropValues.ContainsKey(info) ? Prototype.PropValues[info] : null;
 
                 if (prop != value)
                 {
                     IsDirty = true;
-                    _propValues[info] = value;
+                    Prototype.PropValues[info] = value;
 
                     if (PropertyChanged != null)
                     {
@@ -365,18 +224,18 @@ namespace Memento.Persistence.Commons
 
             if (!string.IsNullOrEmpty(info))
             {
-                prop = _propValues.ContainsKey(info) ? _propValues[info] : null;
+                prop = Prototype.PropValues.ContainsKey(info) ? Prototype.PropValues[info] : null;
 
-                if (prop == null && _dependsConfig != null && _dependsConfig.ContainsKey(info))
+                if (prop == null && Prototype.DependsConfig != null && Prototype.DependsConfig.ContainsKey(info))
                 {
                     prop = Activator.CreateInstance(typeof(T), 
                                         new object[]
                                         {
-                                            _dependsConfig[info],
+                                            Prototype.DependsConfig[info],
                                             this
                                         });
 
-                    _propValues[info] = prop;
+                    Prototype.PropValues[info] = prop;
                 }
             }
 
@@ -390,9 +249,9 @@ namespace Memento.Persistence.Commons
         /// <returns>Columna que mapea la propiedad</returns>
         public string GetMappedProp(string propName)
         {
-            if(_fieldsMap.ContainsKey(propName))
+            if (Prototype.FieldsMap.ContainsKey(propName))
             {
-                return _fieldsMap[propName];
+                return Prototype.FieldsMap[propName];
             }
 
             return propName;
