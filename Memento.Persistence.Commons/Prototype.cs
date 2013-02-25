@@ -9,6 +9,7 @@ namespace Memento.Persistence.Commons
     /// <summary>
     /// Clase que contiene los datos de configuración del mapeo de una entidad
     /// </summary>
+    [Serializable]
     public class Prototype
     {
         #region Atributos
