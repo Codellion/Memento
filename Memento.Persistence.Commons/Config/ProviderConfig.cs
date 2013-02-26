@@ -7,11 +7,11 @@ namespace Memento.Persistence.Commons.Config
 {
     public class ProviderConfig : ConfigurationElement
     {
-        [ConfigurationProperty("className", IsRequired = true)]
-        public string ClassName
+        [ConfigurationProperty("class", IsRequired = true)]
+        public string Class
         {
-            get { return this["className"].ToString(); }
-            set { this["className"] = value; }
+            get { return this["class"].ToString(); }
+            set { this["class"] = value; }
         }
 
         [ConfigurationProperty("assembly", IsRequired = true)]

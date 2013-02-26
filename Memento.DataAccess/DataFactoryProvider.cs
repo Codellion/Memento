@@ -37,7 +37,7 @@ namespace Memento.DataAccess
 
                 var providerConfig = mementoConfig.ProviderConfig;
 
-                string proveedorPers = providerConfig.ClassName;
+                string proveedorPers = providerConfig.Class;
                 string assemblyPers = providerConfig.Assembly;
 
                 Type tProveedor = null;
@@ -86,7 +86,7 @@ namespace Memento.DataAccess
 
             var providerConfig = mementoConfig.ProviderConfig;
 
-            string proveedorPers = providerConfig.ClassName;
+            string proveedorPers = providerConfig.Class;
             string assemblyPers = providerConfig.Assembly;
 
             Type tProveedor = null;
